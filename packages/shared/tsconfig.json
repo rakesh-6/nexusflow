@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // The API runs these files directly with Node, so the same rules apply:
+    // ".ts" import extensions and only syntax Node can strip.
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}

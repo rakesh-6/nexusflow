@@ -1,0 +1,39 @@
+{
+  "name": "@nexusflow/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../../.env src/server.ts",
+    "start": "node --env-file-if-exists=../../.env src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma generate && prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:seed": "prisma db seed",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "docs:openapi": "node src/docs/writeOpenApi.ts"
+  },
+  "dependencies": {
+    "@nexusflow/shared": "workspace:*",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "helmet": "^8.3.0",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.1",
+    "prisma": "7.10.1",
+    "supertest": "^7.3.2"
+  }
+}

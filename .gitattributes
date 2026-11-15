@@ -1,0 +1,8 @@
+# Store every text file with Linux line endings (LF), matching Prettier and the
+# GitHub Actions servers, so Windows never shows whole files as changed.
+* text=auto eol=lf
+
+# Windows-only scripts keep Windows line endings.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf

@@ -1,0 +1,63 @@
+# Runs every check on GitHub's free servers for each push to main and each pull
+# request (PRD §25.6). A red cross on GitHub means one of these steps failed.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the older run, saving free minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Format, lint, types and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Installs the pnpm version named in package.json ("packageManager").
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    # A throwaway PostgreSQL 16 database that exists only during this job, so CI
+    # never touches your Neon databases and needs no secrets.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexusflow
+          POSTGRES_PASSWORD: nexusflow
+          POSTGRES_DB: nexusflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexusflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://nexusflow:nexusflow@localhost:5432/nexusflow_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Applies the migrations to the throwaway database, then runs every test.
+      - run: pnpm test

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Browser code: the DOM APIs plus React's JSX.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    // Types for Vite features such as import.meta.env and CSS imports.
+    "types": ["vite/client"],
+    // The shared package uses ".ts" import paths (the API runs it directly).
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

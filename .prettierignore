@@ -1,0 +1,12 @@
+node_modules/
+dist/
+apps/web/public/
+coverage/
+pnpm-lock.yaml
+**/src/generated/
+
+# PRD.md has wide hand-aligned tables; keep its formatting as written.
+PRD.md
+
+# Generated API documentation; checked by a test instead of Prettier.
+apps/api/openapi.json

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Node 24 runs .ts files directly by removing the types ("type stripping").
+    // These options make TypeScript reject syntax that Node cannot strip.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "prisma", "tests", "prisma.config.ts", "vitest.config.ts"]
+}

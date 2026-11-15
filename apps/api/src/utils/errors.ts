@@ -1,0 +1,22 @@
+// Errors the API throws on purpose. The error handler turns them into the
+// standard error response from PRD.md §18.2 and §18.3.
+export class AppError extends Error {
+  readonly statusCode: number;
+  readonly code: string;
+  readonly details?: unknown;
+
+  constructor(statusCode: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.name = "AppError";
+    this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message = "Resource not found") {
+    super(404, "NOT_FOUND", message);
+    this.name = "NotFoundError";
+  }
+}

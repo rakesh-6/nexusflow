@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { lazy } from "react";
 import { Navigate, useParams, type RouteObject } from "react-router";
+import { GuestOnly, RequireAuth, RootRedirect } from "./features/auth/guards";
 import { AppShell } from "./layouts/AppShell";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { findOrganization } from "./lib/sampleData";
@@ -30,6 +31,13 @@ import { ORG_SETTINGS_SECTIONS } from "./pages/settings/orgSettingsSections";
 const HomePage = lazy(() => import("./pages/HomePage"));
 const ProjectLayout = lazy(() => import("./pages/ProjectLayout"));
 const ProfileSettingsPage = lazy(() => import("./pages/settings/ProfileSettingsPage"));
+const SecuritySettingsPage = lazy(() => import("./pages/settings/SecuritySettingsPage"));
+const LoginPage = lazy(() => import("./features/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("./features/auth/pages/RegisterPage"));
+const VerifyEmailPage = lazy(() => import("./features/auth/pages/VerifyEmailPage"));
+const ForgotPasswordPage = lazy(() => import("./features/auth/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./features/auth/pages/ResetPasswordPage"));
+const GoodbyePage = lazy(() => import("./features/auth/pages/GoodbyePage"));
 
 /** A route that shows a placeholder page and its breadcrumb label. */
 function placeholder(path: string, page: PlaceholderPageProps, label = page.title): RouteObject {
@@ -65,42 +73,33 @@ function OrganizationRedirect() {
 // Every address in the app (PRD §14.2). More specific paths win, so
 // "/acme/settings/..." goes to settings, not to a workspace named "settings".
 export const routes: RouteObject[] = [
-  // Until sign-in exists (Phase 2), open the sample workspace.
-  { path: "/", element: <Navigate to="/acme/general/home" replace /> },
+  // Signed in: into the app. Otherwise: the login page.
+  { path: "/", element: <RootRedirect /> },
 
   {
     element: <PublicLayout />,
     children: [
-      publicPage(
-        "login",
-        "Log in",
-        "Phase 2",
-        "Email and password sign-in, plus Continue with Google.",
-      ),
-      publicPage(
-        "register",
-        "Create your account",
-        "Phase 2",
-        "Sign up with name, email and password, or with Google.",
-      ),
-      publicPage(
-        "verify-email",
-        "Verify your email",
-        "Phase 2",
-        "Confirms your email address from the link we send.",
-      ),
-      publicPage(
-        "forgot-password",
-        "Forgot password",
-        "Phase 2",
-        "Request a password reset link by email.",
-      ),
-      publicPage(
-        "reset-password",
-        "Choose a new password",
-        "Phase 2",
-        "Set a new password from the reset link.",
-      ),
+      // Log in and sign up: people who are already signed in skip ahead.
+      {
+        path: "login",
+        element: (
+          <GuestOnly>
+            <LoginPage />
+          </GuestOnly>
+        ),
+      },
+      {
+        path: "register",
+        element: (
+          <GuestOnly>
+            <RegisterPage />
+          </GuestOnly>
+        ),
+      },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+      { path: "verify-email", element: <VerifyEmailPage /> },
+      { path: "goodbye", element: <GoodbyePage /> },
       publicPage(
         "invite/:token",
         "Join an organization",
@@ -119,12 +118,6 @@ export const routes: RouteObject[] = [
         "Phase 8",
         "Compare the Free, Pro, Business and Enterprise plans.",
       ),
-      publicPage(
-        "goodbye",
-        "Account deleted",
-        "Phase 2",
-        "Confirms that your account and personal data were removed.",
-      ),
     ],
   },
 
@@ -132,7 +125,11 @@ export const routes: RouteObject[] = [
 
   {
     path: "/:orgSlug/settings",
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     handle: crumb("Settings"),
     children: [
       { index: true, element: <Navigate to="profile" replace /> },
@@ -144,13 +141,7 @@ export const routes: RouteObject[] = [
         comingSoon: "An in-app and an email switch for every notification type.",
         icon: Bell,
       }),
-      placeholder("security", {
-        title: "Security",
-        description: "Password, active sessions and account deletion.",
-        phase: "Phase 2",
-        comingSoon: "Change your password, sign out other devices and delete your account.",
-        icon: LockKeyhole,
-      }),
+      { path: "security", element: <SecuritySettingsPage />, handle: crumb("Security") },
       { path: "org", element: <Navigate to="general" replace /> },
       {
         path: "org/:section",
@@ -165,7 +156,11 @@ export const routes: RouteObject[] = [
 
   {
     path: "/:orgSlug/:workspaceSlug",
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     children: [
       { index: true, element: <Navigate to="home" replace /> },
       { path: "home", element: <HomePage />, handle: crumb("Home") },

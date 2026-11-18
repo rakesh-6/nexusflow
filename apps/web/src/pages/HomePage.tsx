@@ -5,7 +5,7 @@ import { StatusCard } from "../components/StatusCard";
 import { Button } from "../components/ui/button";
 import { useSystemStatus } from "../hooks/useSystemStatus";
 import { useWorkspace } from "../hooks/useWorkspace";
-import { SAMPLE_USER } from "../lib/sampleData";
+import { useCurrentUser } from "../features/auth/hooks";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -25,7 +25,8 @@ const GETTING_STARTED = [
 export default function HomePage() {
   const context = useWorkspace();
   const { api, database, recheck } = useSystemStatus();
-  const firstName = SAMPLE_USER.name.split(" ")[0];
+  const { data: user } = useCurrentUser();
+  const firstName = user?.name.split(" ")[0] ?? "there";
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-4 py-6 sm:px-6">

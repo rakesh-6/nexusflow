@@ -1,6 +1,6 @@
-import { LogOut, Monitor, Moon, Sun, User } from "lucide-react";
+import { LogOut, Monitor, Moon, ShieldCheck, Sun, User } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { UserAvatar } from "../components/common/UserAvatar";
 import {
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { SAMPLE_USER } from "../lib/sampleData";
+import { useCurrentUser, useLogout } from "../features/auth/hooks";
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from "../lib/theme";
 import { cn } from "../lib/utils";
 
@@ -24,6 +24,9 @@ export function UserMenu({
   settingsPath: string;
   collapsed: boolean;
 }) {
+  const { data: user } = useCurrentUser();
+  const logout = useLogout();
+  const navigate = useNavigate();
   const [theme, setTheme] = useState<ThemeChoice>(getThemeChoice);
 
   function chooseTheme(value: string) {
@@ -32,6 +35,8 @@ export function UserMenu({
     setThemeChoice(choice);
   }
 
+  if (!user) return null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -39,23 +44,26 @@ export function UserMenu({
           "flex w-full items-center gap-2.5 rounded-control p-1.5 text-left transition-colors hover:bg-card",
           collapsed && "justify-center",
         )}
-        aria-label={`Account menu for ${SAMPLE_USER.name}`}
+        aria-label={`Account menu for ${user.name}`}
       >
-        <UserAvatar name={SAMPLE_USER.name} />
+        <UserAvatar name={user.name} avatarUrl={user.avatarUrl} />
         {!collapsed && (
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">{SAMPLE_USER.name}</span>
-            <span className="block truncate text-xs text-muted-foreground">
-              {SAMPLE_USER.email}
-            </span>
+            <span className="block truncate text-sm font-medium">{user.name}</span>
+            <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
           </span>
         )}
       </DropdownMenuTrigger>
 
       <DropdownMenuContent side="top" align="start" className="w-60">
         <DropdownMenuItem asChild>
-          <Link to={settingsPath}>
-            <User /> Profile and settings
+          <Link to={`${settingsPath}/profile`}>
+            <User /> Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to={`${settingsPath}/security`}>
+            <ShieldCheck /> Security
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -72,9 +80,13 @@ export function UserMenu({
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem
+          disabled={logout.isPending}
+          onSelect={() =>
+            logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) })
+          }
+        >
           <LogOut /> Log out
-          <span className="ml-auto text-xs text-muted-foreground">Phase 2</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

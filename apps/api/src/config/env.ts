@@ -26,14 +26,32 @@ const envSchema = z
           .map((origin) => origin.trim())
           .filter(Boolean),
       ),
+    // The web app's address, used in links inside emails (verify, reset password).
+    APP_URL: z.url().default("http://localhost:5173"),
     // Requests allowed per minute (PRD SEC-09). "General" covers the whole API;
-    // "auth" is the stricter limit for login and sign-up (used from Phase 2).
+    // "auth" is the stricter limit for login, sign-up and password reset.
     RATE_LIMIT_GENERAL_PER_MINUTE: z.coerce.number().int().positive().default(300),
     RATE_LIMIT_AUTH_PER_MINUTE: z.coerce.number().int().positive().default(10),
     // Where emails go: "console" prints them to the terminal, "memory" keeps them
-    // in a list for automated tests. Brevo (real email) is added in Phase 2.
-    MAIL_PROVIDER: z.enum(["console", "memory"]).optional(),
+    // in a list for automated tests, "brevo" really sends them (free plan).
+    MAIL_PROVIDER: z.enum(["console", "memory", "brevo"]).optional(),
     MAIL_FROM: z.string().min(3).default("NexusFlow <no-reply@nexusflow.local>"),
+    BREVO_API_KEY: z.string().min(10).optional(),
+    // Brevo's free plan sends 300 emails a day; extra emails are skipped and logged.
+    MAIL_DAILY_CAP: z.coerce.number().int().positive().default(300),
+    // Cloudinary (free plan) stores profile photos and, later, file attachments.
+    // Leave empty until you create the account; photo upload stays hidden.
+    CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+    CLOUDINARY_API_KEY: z.string().min(1).optional(),
+    CLOUDINARY_API_SECRET: z.string().min(1).optional(),
+    CLOUDINARY_FOLDER_PREFIX: z.string().min(1).default("nexusflow/development"),
+    // "Continue with Google" (PRD §19.4). Leave empty to hide the button.
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  })
+  .refine((values) => values.MAIL_PROVIDER !== "brevo" || values.BREVO_API_KEY, {
+    message: "MAIL_PROVIDER=brevo needs BREVO_API_KEY (see .env.example)",
+    path: ["BREVO_API_KEY"],
   })
   // Pick the email provider from NODE_ENV when it is not set explicitly.
   .transform((values) => ({
@@ -44,7 +62,11 @@ const envSchema = z
 export type Env = z.infer<typeof envSchema>;
 
 function loadEnv(): Env {
-  const result = envSchema.safeParse(process.env);
+  // "BREVO_API_KEY=" with nothing after it means "not set", not "empty text".
+  const provided = Object.fromEntries(
+    Object.entries(process.env).filter(([, value]) => value !== ""),
+  );
+  const result = envSchema.safeParse(provided);
   if (!result.success) {
     console.error("Invalid environment variables:\n" + z.prettifyError(result.error));
     process.exit(1);

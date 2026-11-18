@@ -37,6 +37,7 @@ describe("error responses", () => {
   it("broken JSON gets 400 VALIDATION_ERROR", async () => {
     const response = await request(app)
       .post("/api/v1/health")
+      .set("X-Requested-With", "NexusFlow")
       .set("Content-Type", "application/json")
       .send("{not json")
       .expect(400);
@@ -46,6 +47,7 @@ describe("error responses", () => {
   it("a body over 1 MB gets 413 PAYLOAD_TOO_LARGE", async () => {
     const response = await request(app)
       .post("/api/v1/health")
+      .set("X-Requested-With", "NexusFlow")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ text: "x".repeat(1_100_000) }))
       .expect(413);

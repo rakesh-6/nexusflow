@@ -8,6 +8,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { DEFAULT_TASK_STATUSES, type StatusCategory } from "@nexusflow/shared";
 import { prisma } from "../src/lib/prisma.ts";
+import { hashPassword } from "../src/modules/auth/password.ts";
 
 if (process.env["NODE_ENV"] === "production") {
   console.error("Refusing to seed: NODE_ENV is production.");
@@ -284,13 +285,20 @@ async function removePreviousSeed() {
 // Step 2: build one organization
 // ---------------------------------------------------------------------------
 
+// Every sample person can log in with this password (development data only).
+export const DEMO_PASSWORD = "Acme-demo-2026";
+let demoPasswordHash: Promise<string> | undefined;
+
 async function createUsers(people: { key: string; name: string }[], domain: string) {
+  demoPasswordHash ??= hashPassword(DEMO_PASSWORD);
+  const passwordHash = await demoPasswordHash;
   const users = await prisma.user.createManyAndReturn({
     data: people.map((person) => ({
       email: `${person.key}@${domain}`,
       name: person.name,
       timezone: "Asia/Kolkata",
       emailVerifiedAt: new Date(),
+      passwordHash,
     })),
   });
   // Look users up by their short key, e.g. byKey.get("sana").

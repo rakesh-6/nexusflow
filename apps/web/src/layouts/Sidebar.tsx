@@ -139,7 +139,7 @@ export function SidebarContent({ context, collapsed, onToggleCollapse }: Sidebar
           </Tooltip>
         )}
         <div className="mt-2 border-t pt-2">
-          <UserMenu settingsPath={`/${organization.slug}/settings/profile`} collapsed={collapsed} />
+          <UserMenu settingsPath={`/${organization.slug}/settings`} collapsed={collapsed} />
         </div>
       </div>
     </div>

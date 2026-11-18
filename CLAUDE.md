@@ -29,7 +29,8 @@ These are the planned commands. They start working once Phase 1 (project setup) 
 - Run end-to-end tests: `pnpm test:e2e`
 - Apply database migrations: `pnpm db:migrate` (regenerate the client: `pnpm db:generate`; browse data: `pnpm db:studio`)
 - Prisma is pinned to 7.10.1 (the `prisma` package's default version is an 8.0 release candidate)
-- Fill the dev database with sample data: `pnpm db:seed` (safe to repeat; about 40 seconds)
+- Fill the dev database with sample data: `pnpm db:seed` (safe to repeat; about 40 seconds). Sample people log in as e.g. `aarav@acme.example` with password `Acme-demo-2026`
+- Auth conventions: protect routes with `requireAuth` / `requireVerified` / `requireRecentAuth` from `apps/api/src/middleware/auth.ts` and read the user with `currentAuth(req)`. Every non-GET request needs the header `X-Requested-With: NexusFlow` (the web app's `apiPost/apiPatch/apiDelete` add it). Never return a `User` row directly; use `toCurrentUser()`
 - Hand-written SQL lives in the migrations: generated `searchVector` columns and CHECK constraints. Prisma cannot describe them, so after creating a migration with `--create-only`, check its SQL before applying, and confirm `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma` reports an empty migration.
 - Lint and type-check: `pnpm lint` and `pnpm typecheck`
 - Format code: `pnpm format` (check only: `pnpm format:check`)

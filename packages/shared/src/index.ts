@@ -2,6 +2,7 @@
 // permission rules will be added here in later steps (see PRD.md §15.2).
 // Imports use ".ts" because Node runs the API's TypeScript files directly.
 
+export * from "./auth.ts";
 export * from "./taskStatuses.ts";
 
 export const APP_NAME = "NexusFlow";

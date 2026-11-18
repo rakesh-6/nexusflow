@@ -2374,6 +2374,19 @@ Phase 1 is complete when all eight steps are done and the Phase 1 acceptance cri
 - **Dependencies**: Phase 1.
 - **Acceptance criteria**: AC-AUTH-01…08 pass as integration tests; E2E: register → verify via the captured test email → log in → update profile → upload avatar → log out; rate limits verified (429s); OAuth flow passes against a mocked OIDC provider in tests and against Google in staging; `passwordHash` never appears in any response (test scans all auth/user responses).
 
+#### Phase 2 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 2.1 | Server-side sessions (random token in an HttpOnly, SameSite=Lax cookie; SHA-256 fingerprint in `Session`; 30-day sliding and 90-day absolute expiry; 30 s cache), Argon2id password hashing with equal timing for unknown accounts, register (enumeration-safe), login with 5-failure/15-minute lockout, logout and logout everywhere, `GET /users/me`, CSRF protection (`X-Requested-With: NexusFlow` header plus Origin check), SECURITY audit events | argon2, cookie-parser | ✅ Done |
+| 2.2 | Email verification and resend (1 a minute, 5 a day), single-use hashed link tokens, Brevo HTTP mail provider with daily cap, email templates (verify, account exists, reset, password changed), safe `sendEmail` that never breaks a request | none | ✅ Done |
+| 2.3 | Forgot and reset password (enumeration-safe; signs out every device), change password (signs out other devices), password re-confirmation for sensitive actions (5 minutes), active sessions list and per-device sign-out | none | ✅ Done |
+| 2.4 | Web app: TanStack Query cache, API client with CSRF header, React Hook Form + shared Zod schemas, pages for log in, sign up, verify email, forgot and reset password, Security settings; route guards (signed out → login with safe return address, unverified → verify page); real user in the menu and on Home | @tanstack/react-query, react-hook-form, @hookform/resolvers | ✅ Done |
+| 2.5 | Profile settings (name, time zone), profile photo via signed direct upload to Cloudinary with server-side verification (no Cloudinary library), account deletion with password re-confirmation, organization-owner block and personal-data scrub, Goodbye page | none | ✅ Done (photo upload needs Cloudinary keys, A-25) |
+| 2.6 | "Continue with Google" (Authorization Code + PKCE, state and nonce, verified-email linking rules), hidden until configured | openid-client | ✅ Code done; needs a Google Cloud OAuth client to switch on |
+
+Verification: 57 API tests in 9 files (auth, account, HTTP, database, docs, mail, validation, timeout, Cloudinary signature) and 3 shared tests all pass against the Neon test branch (224 s), plus 13 page renders and 3 guard checks with zero React warnings. The test setup rebuilds the test database automatically if an earlier run stopped half-way through a migration.
+
 ### Phase 3 — Organization and workspace management (≈ 1.5 weeks)
 - **Deliverables**: organization creation and onboarding wizard; tenant middleware; permission resolver and `authorize()` with the §12 matrix in `@nexusflow/shared`; organization settings (general, logo, danger zone: transfer ownership, delete); members list/role change/remove; invitations (bulk create, email, preview, accept/decline, resend, revoke, expiry job); workspaces CRUD, archive, members, branding; workspace switcher and `context` endpoint; plan configuration and `PlanGuard` with FREE limits; usage endpoint; workspace activity feed; organization admin panel skeleton (members, invitations, settings, usage); DOMAIN/SECURITY activity logging for all of the above; cross-tenant test harness (two seeded orgs, generated matrix).
 - **Dependencies**: Phase 2 (sessions, email, storage).
@@ -2561,6 +2574,9 @@ Ordered roughly by expected demand; none are in scope for Phases 1–12.
 | A-21 | Production serves the SPA and the API from one origin on Render (`<app-name>.onrender.com`), so no custom domain is needed | §19.3, §26.2 | A separately hosted frontend would need the CSRF-token fallback |
 | A-22 | English-only UI; browser locale for date/number formatting | §5, NFR-20 | i18n later |
 | A-23 | Auth events before an organization exists are stored in `ActivityLog` with `organizationId = NULL` (column made nullable for SECURITY rows without a tenant) | §17.3, Phase 2 | Alternatively a separate `UserSecurityLog` table |
+| A-25 | Profile photos use Cloudinary's public `upload` delivery with an unguessable random name, not time-limited signed URLs: Cloudinary's expiring delivery URLs need token-based authentication, a paid feature. File attachments (Phase 7) will use private assets served through short-lived download URLs from the API instead | §11.1.6, §11.11, FR-FILE-05 | Revisit if a paid Cloudinary plan is ever used |
+| A-26 | The common-password list is a short built-in list of the most-guessed passwords (in `packages/shared/src/auth.ts`) instead of the top 10,000 | §11.1.1 | Swap in a larger list file later if needed |
+| A-27 | Seeded sample users all share the demo password `Acme-demo-2026` (development data only; the seed refuses to run when `NODE_ENV=production`) | §17.8 | Demo mode (§26.8) will create per-visitor demo users instead |
 | A-24 | Zero-cost constraint: NexusFlow is a portfolio project, so every service must run on a free tier and nothing paid is used | §1, §26.1, §26.8 | Free-tier limits are accepted: cold starts, 0.5 GB database, 300 emails per day, test-mode payments |
 
 ### A.2 Decisions (resolved on 2026-11-12 for a zero-cost portfolio build)
@@ -2662,9 +2678,8 @@ All variables are validated at startup (`apps/api/src/config/env.ts`, `apps/web/
 | `DIRECT_DATABASE_URL` 🔒 | Direct connection for migrations |
 | `SESSION_COOKIE_NAME` / `COOKIE_DOMAIN` / `COOKIE_SAMESITE` | `nf_session` / empty (host-only cookie) / `lax` (`none` only for a separately hosted frontend) |
 | `SESSION_TTL_DAYS` / `SESSION_ABSOLUTE_TTL_DAYS` | `30` / `90` |
-| `TOKEN_SIGNING_SECRET` 🔒 | HMAC key for OAuth state and signed values (32+ bytes) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` 🔒 / `GOOGLE_REDIRECT_URI` | OAuth |
-| `MAIL_PROVIDER` / `MAIL_API_KEY` 🔒 / `MAIL_FROM` | `brevo` in production, `console` in development, `memory` in tests / Brevo API key / `NexusFlow <your-verified-sender@gmail.com>` |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` 🔒 | Optional; "Continue with Google" stays hidden while empty. The redirect URI is always `${APP_URL}/api/v1/auth/google/callback`, and the OAuth state lives in a short-lived HttpOnly cookie, so no extra signing secret is needed |
+| `MAIL_PROVIDER` / `BREVO_API_KEY` 🔒 / `MAIL_FROM` | `brevo` in production, `console` in development, `memory` in tests / Brevo API key (required when `brevo`) / `NexusFlow <your-verified-sender@gmail.com>` |
 | `MAIL_DAILY_CAP` | `300` (Brevo free limit; emails beyond it are skipped and logged) |
 | `TEST_DATABASE_URL` 🔒 | Neon `test` branch connection string used by integration tests |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` 🔒 / `CLOUDINARY_FOLDER_PREFIX` | `nexusflow/production` |

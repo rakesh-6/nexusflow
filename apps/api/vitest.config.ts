@@ -45,6 +45,7 @@ export default defineConfig({
       MAIL_PROVIDER: "memory",
       LOG_LEVEL: "silent",
       RATE_LIMIT_GENERAL_PER_MINUTE: "10000",
+      RATE_LIMIT_AUTH_PER_MINUTE: "10000",
     },
     // One test file at a time keeps the number of database connections low.
     fileParallelism: false,

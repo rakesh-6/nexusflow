@@ -31,6 +31,7 @@ pnpm build          # build the web app; the API then serves it on http://localh
 pnpm db:migrate     # apply database migrations to your Neon dev branch
 pnpm db:studio      # browse the database in your browser
 pnpm db:seed        # fill the database with sample data (Acme Studio and Globex)
+                    # then log in as aarav@acme.example / Acme-demo-2026
 ```
 
 Settings come from a `.env` file in the project root. Copy `.env.example` to `.env` to start; the defaults work for local development.

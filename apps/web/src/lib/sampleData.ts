@@ -24,11 +24,6 @@ export interface SampleOrganization {
   projects: Record<string, SampleProject[]>;
 }
 
-export const SAMPLE_USER = {
-  name: "Aarav Shah",
-  email: "aarav@acme.example",
-};
-
 export const SAMPLE_ORGANIZATIONS: SampleOrganization[] = [
   {
     slug: "acme",

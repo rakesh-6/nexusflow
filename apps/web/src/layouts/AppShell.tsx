@@ -1,19 +1,38 @@
 import { Suspense, useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { PageSkeleton } from "../components/common/PageSkeleton";
 import { Sheet, SheetContent } from "../components/ui/sheet";
 import { TooltipProvider } from "../components/ui/tooltip";
+import { FullPageLoader, ServerUnavailable } from "../features/auth/guards";
+import { useCurrentUser } from "../features/auth/hooks";
+import { useOrgContext, useRememberWorkspace } from "../features/organizations/hooks";
+import { NoWorkspacePage } from "../features/organizations/NoWorkspacePage";
 import { useSidebarCollapsed } from "../hooks/useSidebarCollapsed";
 import { useWorkspace } from "../hooks/useWorkspace";
+import { ApiError } from "../lib/api";
 import { cn } from "../lib/utils";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { SidebarContent } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
+/** Saves the workspace in the address as "last opened", once per change. */
+function useRememberOpenedWorkspace(workspaceId: string | undefined) {
+  const { data: user } = useCurrentUser();
+  const remember = useRememberWorkspace();
+  const { mutate } = remember;
+  const lastId = user?.lastActiveWorkspaceId;
+  useEffect(() => {
+    if (workspaceId && workspaceId !== lastId) mutate(workspaceId);
+  }, [workspaceId, lastId, mutate]);
+}
+
 // The frame around every signed-in page (PRD §14.1): sidebar on the left
 // (a slide-out drawer on phones), top bar, and the current page in the middle.
 export function AppShell() {
+  const { orgSlug, workspaceSlug } = useParams();
+  const orgContext = useOrgContext(orgSlug);
   const context = useWorkspace();
+  useRememberOpenedWorkspace(workspaceSlug ? context?.workspace.id : undefined);
   const { collapsed, toggle } = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
@@ -35,7 +54,23 @@ export function AppShell() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [navigate, searchPath]);
 
-  if (!context) return <NotFoundPage />;
+  if (orgContext.isPending) return <FullPageLoader />;
+  if (orgContext.isError) {
+    const notMember = orgContext.error instanceof ApiError && orgContext.error.status === 404;
+    return notMember ? (
+      <NotFoundPage />
+    ) : (
+      <ServerUnavailable retry={() => void orgContext.refetch()} />
+    );
+  }
+  if (!context) {
+    // A workspace in the address that does not exist, or a guest with no workspace.
+    return workspaceSlug ? (
+      <NotFoundPage />
+    ) : (
+      <NoWorkspacePage organizationName={orgContext.data.organization.name} />
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={300}>

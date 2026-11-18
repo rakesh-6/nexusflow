@@ -22,7 +22,7 @@ These are the planned commands. They start working once Phase 1 (project setup) 
 - Build for production: `pnpm build` (then the API also serves the app at http://localhost:4000)
 - Design tokens (colors, radius, font) live in `apps/web/src/styles/index.css`; use token classes like `bg-primary`, never raw hex colors
 - Every page address is listed in `apps/web/src/routes.tsx`. UI building blocks (shadcn style) are in `apps/web/src/components/ui/`; join classes with `cn()` from `lib/utils.ts`
-- `apps/web/src/lib/sampleData.ts` is temporary sample data for the sidebar; Phase 3 replaces it with the real organization context from the API
+- The current organization and workspace come from `useWorkspace()` (`apps/web/src/hooks/useWorkspace.ts`, backed by `GET /orgs/:org/context`); its `can(permission)` hides buttons, and the API checks again. Organization API hooks live in `apps/web/src/features/organizations/hooks.ts`
 - Run tests: `pnpm test` (needs `TEST_DATABASE_URL` in `.env`: the Neon `test` branch, never the dev one; a guard refuses the dev database). Watch mode: `pnpm --filter @nexusflow/api test:watch`
 - Database tests must use `inRollbackTransaction()` from `apps/api/tests/helpers/database.ts` so they never leave data behind
 - After adding or changing an API endpoint, describe it in `apps/api/src/docs/openapi.ts` and run `pnpm --filter @nexusflow/api docs:openapi` (a test fails if `openapi.json` is out of date)

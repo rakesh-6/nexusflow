@@ -22,23 +22,22 @@ const TABS: { path: string; label: string; icon: LucideIcon }[] = [
   { path: "settings", label: "Settings", icon: Settings },
 ];
 
-// Header and view tabs shared by every page of one project.
+// Header and view tabs shared by every page of one project. Until projects come
+// from the API (Phase 4), the header shows only the key from the address.
 export default function ProjectLayout() {
-  const { projectKey } = useParams();
+  const { projectKey = "" } = useParams();
   const context = useWorkspace();
-  const project = context?.projects.find((p) => p.key === projectKey);
-  if (!context || !project) return <NotFoundPage />;
+  if (!context || !projectKey) return <NotFoundPage />;
 
-  const base = context.path(`projects/${project.key}`);
+  const base = context.path(`projects/${projectKey}`);
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-card px-4 pt-5 sm:px-6">
         <div className="flex items-center gap-3">
-          <span className={cn("size-3 rounded-[4px]", project.colorClass)} aria-hidden="true" />
-          <h1 className="text-xl font-semibold tracking-tight">{project.name}</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Project</h1>
           <span className="rounded-full border bg-surface px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {project.key}
+            {projectKey}
           </span>
         </div>
         <nav aria-label="Project views" className="-mb-px mt-4 flex gap-1 overflow-x-auto">

@@ -14,7 +14,6 @@ import { NavLink } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tooltip } from "../components/ui/tooltip";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
-import { SAMPLE_UNREAD_COUNT } from "../lib/sampleData";
 import { cn } from "../lib/utils";
 import { UserMenu } from "./UserMenu";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
@@ -71,8 +70,9 @@ interface SidebarContentProps {
 
 // Everything inside the sidebar. Used by the desktop sidebar and the phone drawer.
 export function SidebarContent({ context, collapsed, onToggleCollapse }: SidebarContentProps) {
-  const { organization, projects, path } = context;
+  const { path, settingsPath } = context;
 
+  // The project shortcuts list returns in Phase 4, when projects come from the API.
   return (
     <div className="flex h-full flex-col gap-4 p-3">
       <WorkspaceSwitcher context={context} collapsed={collapsed} />
@@ -80,50 +80,14 @@ export function SidebarContent({ context, collapsed, onToggleCollapse }: Sidebar
       <nav aria-label="Main" className="flex flex-col gap-0.5">
         <NavItem to={path("home")} icon={House} label="Home" collapsed={collapsed} />
         <NavItem to={path("my-tasks")} icon={ListTodo} label="My tasks" collapsed={collapsed} />
-        <NavItem
-          to={path("inbox")}
-          icon={Inbox}
-          label="Inbox"
-          collapsed={collapsed}
-          badge={SAMPLE_UNREAD_COUNT}
-        />
+        <NavItem to={path("inbox")} icon={Inbox} label="Inbox" collapsed={collapsed} />
         <NavItem to={path("projects")} icon={FolderKanban} label="Projects" collapsed={collapsed} />
         <NavItem to={path("teams")} icon={Users} label="Teams" collapsed={collapsed} />
         <NavItem to={path("insights")} icon={ChartColumn} label="Insights" collapsed={collapsed} />
       </nav>
 
-      {!collapsed && projects.length > 0 && (
-        <nav aria-label="Projects" className="flex min-h-0 flex-col gap-0.5">
-          <h2 className="px-2.5 pb-1 text-xs font-semibold text-muted-foreground">Projects</h2>
-          <div className="flex flex-col gap-0.5 overflow-y-auto">
-            {projects.map((project) => (
-              <NavLink
-                key={project.key}
-                to={path(`projects/${project.key}`)}
-                className={({ isActive }) =>
-                  cn(
-                    "flex h-8 items-center gap-2.5 rounded-control px-2.5 text-sm transition-colors duration-150",
-                    isActive
-                      ? "bg-card font-medium text-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
-                  )
-                }
-              >
-                <span className={cn("size-2.5 shrink-0 rounded-[3px]", project.colorClass)} />
-                <span className="truncate">{project.name}</span>
-              </NavLink>
-            ))}
-          </div>
-        </nav>
-      )}
-
       <div className="mt-auto flex flex-col gap-0.5">
-        <NavItem
-          to={`/${organization.slug}/settings`}
-          icon={Settings}
-          label="Settings"
-          collapsed={collapsed}
-        />
+        <NavItem to={settingsPath()} icon={Settings} label="Settings" collapsed={collapsed} />
         {onToggleCollapse && (
           <Tooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
             <Button
@@ -139,7 +103,7 @@ export function SidebarContent({ context, collapsed, onToggleCollapse }: Sidebar
           </Tooltip>
         )}
         <div className="mt-2 border-t pt-2">
-          <UserMenu settingsPath={`/${organization.slug}/settings`} collapsed={collapsed} />
+          <UserMenu settingsPath={settingsPath()} collapsed={collapsed} />
         </div>
       </div>
     </div>

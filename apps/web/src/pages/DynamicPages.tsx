@@ -1,8 +1,6 @@
 import { SquareCheckBig, Users } from "lucide-react";
 import { useParams } from "react-router";
-import { NotFoundPage } from "./NotFoundPage";
 import { PlaceholderPage } from "./PlaceholderPage";
-import { ORG_SETTINGS_SECTIONS } from "./settings/orgSettingsSections";
 
 // Placeholder pages whose title comes from the address.
 
@@ -33,12 +31,4 @@ export function TeamPage() {
       icon={Users}
     />
   );
-}
-
-/** /:org/settings/org/members and the other admin panel sections */
-export function OrgSettingsPage() {
-  const { section = "" } = useParams();
-  const meta = ORG_SETTINGS_SECTIONS[section];
-  if (!meta) return <NotFoundPage />;
-  return <PlaceholderPage {...meta} />;
 }

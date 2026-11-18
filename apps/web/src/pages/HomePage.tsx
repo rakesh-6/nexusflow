@@ -1,4 +1,5 @@
 import { CircleCheck, FolderPlus, Target, UserPlus } from "lucide-react";
+import { Link } from "react-router";
 import { EmptyState } from "../components/common/EmptyState";
 import { PageHeader } from "../components/common/PageHeader";
 import { StatusCard } from "../components/StatusCard";
@@ -17,7 +18,6 @@ function greeting() {
 const GETTING_STARTED = [
   { icon: FolderPlus, label: "Create your first project", phase: "Phase 4" },
   { icon: CircleCheck, label: "Add and assign a task", phase: "Phase 5" },
-  { icon: UserPlus, label: "Invite your teammates", phase: "Phase 3" },
 ];
 
 // Home (PRD §14.2): "My Focus" arrives in Phase 8. For now it shows the
@@ -52,6 +52,20 @@ export default function HomePage() {
               </div>
             </li>
           ))}
+          {context?.can("members:invite") && (
+            <li>
+              <Link
+                to={context.settingsPath("org/invitations")}
+                className="flex h-full items-start gap-3 rounded-card border bg-card p-4 shadow-sm transition-colors hover:bg-surface"
+              >
+                <UserPlus className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium">Invite your teammates</p>
+                  <p className="text-xs text-muted-foreground">Send email invitations</p>
+                </div>
+              </Link>
+            </li>
+          )}
         </ul>
       </section>
 

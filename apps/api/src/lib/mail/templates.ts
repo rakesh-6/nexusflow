@@ -71,6 +71,24 @@ export function passwordResetMessage(input: { name: string; link: string }): Ema
   };
 }
 
+export function invitationMessage(input: {
+  organizationName: string;
+  inviterName: string;
+  role: string;
+  link: string;
+}): EmailContent {
+  const role = input.role.charAt(0) + input.role.slice(1).toLowerCase();
+  const lines = [
+    `${input.inviterName} invited you to join ${input.organizationName} on ${APP_NAME} as ${role === "Admin" ? "an" : "a"} ${role}.`,
+    "The invitation works for 7 days. If you do not know this person, you can ignore this email.",
+  ];
+  return {
+    subject: `${input.inviterName} invited you to ${input.organizationName} on ${APP_NAME}`,
+    text: `${lines.join("\n\n")}\n\n${input.link}\n`,
+    html: html(lines, { label: "View invitation", url: input.link }),
+  };
+}
+
 export function passwordChangedMessage(input: { name: string }): EmailContent {
   const lines = [
     `Hi ${firstName(input.name)},`,

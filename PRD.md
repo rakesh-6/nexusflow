@@ -2392,6 +2392,22 @@ Verification: 57 API tests in 9 files (auth, account, HTTP, database, docs, mail
 - **Dependencies**: Phase 2 (sessions, email, storage).
 - **Acceptance criteria**: AC-ORG-01…05, AC-INV-01…05 and AC-ADM-01/02 pass; the generated cross-tenant matrix passes for every endpoint delivered so far; the permission matrix unit test covers every cell of §12.2; E2E: create org → invite second user → accept in a second context → switch workspaces → change role → see audit entry; FREE limits produce 402 with structured details for workspaces and members.
 
+#### Phase 3 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 3.1 | Shared rules: plan limits (§23.1), permission matrix (§12.2) with role-change and removal rules (A-8), organization/workspace/invitation schemas, API response types | none | ✅ Done |
+| 3.2 | Tenant middleware (`loadTenant`: 404 for non-members; `requireOrgPermission`), plan guard (402 `PLAN_LIMIT_REACHED` with details), activity-log helper | none | ✅ Done |
+| 3.3 | Organizations API: create (General workspace, owner, FREE subscription in one transaction), context, rename/re-address (old slug kept in `slugHistory`), soft delete, transfer ownership, leave, usage, audit log | none | ✅ Done |
+| 3.4 | Members and invitations API: list/search, change role, remove (ends every membership and assignment), invite up to 20 (pending invites count against the plan), resend, revoke, public preview, accept, decline | none | ✅ Done |
+| 3.5 | Workspaces API: list, create, rename, archive/restore, delete (never the last one), members, activity feed; last-opened workspace | none | ✅ Done |
+| 3.6 | Web: real organization context replaces the sample data; workspace switcher with "New workspace" dialog; `/` opens the last workspace (else the first, else onboarding); onboarding page; invitation page (signed-out, wrong-account and unverified cases) | none | ✅ Done |
+| 3.7 | Web: settings layout; Organization (details, transfer, leave, delete), Members, Invitations, Usage, Audit log, Roles and permissions pages; Workspace settings (details, members, archive, delete); 402 messages link to pricing | none | ✅ Done |
+
+Verification: the full suite (75 API tests in 10 files and 18 shared tests, 488 s) passes against the Neon test branch, including 18 Phase 3 API tests (creation, plan limits, invitations, roles, workspaces, tenant isolation for every organization endpoint) and 15 permission-matrix unit tests; 55 operations documented in `openapi.json`; 16 page renders (owner and member views, signed-out invitation) pass.
+
+Deferred from Phase 3: organization and workspace logo upload and the workspace branding color; the workspace activity page in the web app (the API exists); audit-log CSV export; the background job that marks invitations expired (expiry is enforced when an invitation is opened; Phase 7 adds pg-boss jobs); redirects from old organization addresses; the Prisma tenant extension (§20.3) — services scope every query by `organizationId` and the cross-tenant tests check it; the Playwright E2E journey (Playwright is installed with the E2E suite in Phase 12, or earlier if wanted); guests see an explanation page until project sharing arrives in Phase 4.
+
 ### Phase 4 — Team and project management (≈ 1.5 weeks)
 - **Deliverables**: teams CRUD, members, leads, team pages (members, projects, activity); labels CRUD; projects CRUD with key generation/locking, cover upload, dates, priority, status lifecycle, visibility, archive/restore, soft delete + Trash + purge job; project members and roles; default statuses seeding and status management (add/rename/recolor/reorder/delete with reassignment); milestones CRUD; project list/grid with filters and progress/health placeholders (formulas implemented in Phase 8 but computed here); project settings page; project activity feed; WORKSPACE visibility and team-implied access in the resolver.
 - **Dependencies**: Phase 3.

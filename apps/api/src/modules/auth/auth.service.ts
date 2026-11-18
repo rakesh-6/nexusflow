@@ -42,6 +42,7 @@ export function toCurrentUser(user: User): CurrentUser {
     timezone: user.timezone,
     emailVerified: user.emailVerifiedAt !== null,
     hasPassword: user.passwordHash !== null,
+    lastActiveWorkspaceId: user.lastActiveWorkspaceId,
     createdAt: user.createdAt.toISOString(),
   };
 }

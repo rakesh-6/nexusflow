@@ -6,10 +6,11 @@ import {
   type CurrentUser,
 } from "@nexusflow/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FormField, showServerErrors } from "../../components/common/FormField";
 import { PageHeader } from "../../components/common/PageHeader";
+import { SettingsSection as Section } from "../../components/common/SettingsSection";
 import { UserAvatar } from "../../components/common/UserAvatar";
 import { ThemeSwitcher } from "../../components/ThemeSwitcher";
 import { TokenPreview } from "../../components/TokenPreview";
@@ -18,27 +19,6 @@ import { Button } from "../../components/ui/button";
 import { useRemoveAvatar, useUpdateProfile, useUploadAvatar } from "../../features/account/hooks";
 import { useCurrentUser } from "../../features/auth/hooks";
 import { ApiError, apiGet } from "../../lib/api";
-
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  const id = `${title.toLowerCase().replace(/\s+/g, "-")}-heading`;
-  return (
-    <section aria-labelledby={id} className="rounded-card border bg-card p-5 shadow-sm sm:p-6">
-      <h2 id={id} className="text-base font-semibold">
-        {title}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      <div className="mt-5">{children}</div>
-    </section>
-  );
-}
 
 function AvatarEditor({ user }: { user: CurrentUser }) {
   const upload = useUploadAvatar();

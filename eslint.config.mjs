@@ -9,7 +9,10 @@ export default defineConfig([
   {
     rules: {
       // Allow unused parameters that start with "_" (e.g. Express's `_next`).
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
     },
   },
 ]);

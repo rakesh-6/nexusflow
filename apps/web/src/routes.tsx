@@ -15,16 +15,16 @@ import {
   Users,
 } from "lucide-react";
 import { lazy } from "react";
-import { Navigate, useParams, type RouteObject } from "react-router";
-import { GuestOnly, RequireAuth, RootRedirect } from "./features/auth/guards";
+import { Navigate, type RouteObject } from "react-router";
+import { GuestOnly, OrganizationRedirect, RequireAuth, RootRedirect } from "./features/auth/guards";
 import { AppShell } from "./layouts/AppShell";
 import { PublicLayout } from "./layouts/PublicLayout";
-import { findOrganization } from "./lib/sampleData";
 import { crumb } from "./lib/routeHandle";
-import { OrgSettingsPage, TaskPage, TeamPage } from "./pages/DynamicPages";
+import { TaskPage, TeamPage } from "./pages/DynamicPages";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PlaceholderPage, type PlaceholderPageProps } from "./pages/PlaceholderPage";
 import { ORG_SETTINGS_SECTIONS } from "./pages/settings/orgSettingsSections";
+import { SettingsLayout } from "./pages/settings/SettingsLayout";
 
 // Bigger pages load only when first visited, keeping the first download small.
 // While one loads, the layout shows a skeleton (PRD §14.4, §14.7).
@@ -38,6 +38,12 @@ const VerifyEmailPage = lazy(() => import("./features/auth/pages/VerifyEmailPage
 const ForgotPasswordPage = lazy(() => import("./features/auth/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./features/auth/pages/ResetPasswordPage"));
 const GoodbyePage = lazy(() => import("./features/auth/pages/GoodbyePage"));
+const OrgSettingsPage = lazy(() => import("./pages/settings/OrgSettingsPage"));
+const OnboardingPage = lazy(() => import("./features/organizations/pages/OnboardingPage"));
+const InvitePage = lazy(() => import("./features/organizations/pages/InvitePage"));
+const WorkspaceSettingsPage = lazy(
+  () => import("./features/organizations/settings/WorkspaceSettingsPage"),
+);
 
 /** A route that shows a placeholder page and its breadcrumb label. */
 function placeholder(path: string, page: PlaceholderPageProps, label = page.title): RouteObject {
@@ -60,14 +66,6 @@ function publicPage(path: string, title: string, phase: string, comingSoon: stri
       </div>
     ),
   };
-}
-
-/** /acme -> /acme/general/home (the organization's first workspace). */
-function OrganizationRedirect() {
-  const { orgSlug } = useParams();
-  const firstWorkspace = findOrganization(orgSlug)?.workspaces[0];
-  if (!firstWorkspace) return <NotFoundPage />;
-  return <Navigate to={`/${orgSlug}/${firstWorkspace.slug}/home`} replace />;
 }
 
 // Every address in the app (PRD §14.2). More specific paths win, so
@@ -100,18 +98,16 @@ export const routes: RouteObject[] = [
       { path: "reset-password", element: <ResetPasswordPage /> },
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "goodbye", element: <GoodbyePage /> },
-      publicPage(
-        "invite/:token",
-        "Join an organization",
-        "Phase 3",
-        "Accept or decline an invitation.",
-      ),
-      publicPage(
-        "onboarding",
-        "Set up your organization",
-        "Phase 3",
-        "Name your organization and invite your team.",
-      ),
+      // Anyone can open an invitation; the page explains how to accept it.
+      { path: "invite/:token", element: <InvitePage /> },
+      {
+        path: "onboarding",
+        element: (
+          <RequireAuth>
+            <OnboardingPage />
+          </RequireAuth>
+        ),
+      },
       publicPage(
         "pricing",
         "Pricing",
@@ -121,7 +117,14 @@ export const routes: RouteObject[] = [
     ],
   },
 
-  { path: "/:orgSlug", element: <OrganizationRedirect /> },
+  {
+    path: "/:orgSlug",
+    element: (
+      <RequireAuth>
+        <OrganizationRedirect />
+      </RequireAuth>
+    ),
+  },
 
   {
     path: "/:orgSlug/settings",
@@ -132,25 +135,30 @@ export const routes: RouteObject[] = [
     ),
     handle: crumb("Settings"),
     children: [
-      { index: true, element: <Navigate to="profile" replace /> },
-      { path: "profile", element: <ProfileSettingsPage />, handle: crumb("Profile") },
-      placeholder("notifications", {
-        title: "Notifications",
-        description: "Choose which notifications you get in the app and by email.",
-        phase: "Phase 7",
-        comingSoon: "An in-app and an email switch for every notification type.",
-        icon: Bell,
-      }),
-      { path: "security", element: <SecuritySettingsPage />, handle: crumb("Security") },
-      { path: "org", element: <Navigate to="general" replace /> },
       {
-        path: "org/:section",
-        element: <OrgSettingsPage />,
-        handle: crumb(
-          (params) => ORG_SETTINGS_SECTIONS[params["section"] ?? ""]?.title ?? "Settings",
-        ),
+        element: <SettingsLayout />,
+        children: [
+          { index: true, element: <Navigate to="profile" replace /> },
+          { path: "profile", element: <ProfileSettingsPage />, handle: crumb("Profile") },
+          placeholder("notifications", {
+            title: "Notifications",
+            description: "Choose which notifications you get in the app and by email.",
+            phase: "Phase 7",
+            comingSoon: "An in-app and an email switch for every notification type.",
+            icon: Bell,
+          }),
+          { path: "security", element: <SecuritySettingsPage />, handle: crumb("Security") },
+          { path: "org", element: <Navigate to="general" replace /> },
+          {
+            path: "org/:section",
+            element: <OrgSettingsPage />,
+            handle: crumb(
+              (params) => ORG_SETTINGS_SECTIONS[params["section"] ?? ""]?.title ?? "Settings",
+            ),
+          },
+          { path: "*", element: <NotFoundPage /> },
+        ],
       },
-      { path: "*", element: <NotFoundPage /> },
     ],
   },
 
@@ -273,17 +281,7 @@ export const routes: RouteObject[] = [
           "Search across everything you can access, with filters. Ctrl+K opens it from anywhere.",
         icon: Search,
       }),
-      placeholder(
-        "settings",
-        {
-          title: "Workspace settings",
-          description: "Name, members, labels and branding.",
-          phase: "Phase 3",
-          comingSoon: "Rename the workspace, manage its members and labels, and set its logo.",
-          icon: Settings,
-        },
-        "Settings",
-      ),
+      { path: "settings", element: <WorkspaceSettingsPage />, handle: crumb("Settings") },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

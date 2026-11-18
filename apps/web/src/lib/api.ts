@@ -6,7 +6,7 @@ export interface ApiIssue {
 }
 
 export type ApiResponse<T> =
-  | { success: true; data: T }
+  | { success: true; data: T; meta?: Record<string, unknown> }
   | {
       success: false;
       error: { code: string; message: string; details?: ApiIssue[]; requestId?: string };
@@ -26,15 +26,15 @@ export class ApiError extends Error {
   }
 }
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
- * Calls the API and returns `data`, or throws an ApiError with the server's
- * message. Paths start with "/api/v1"; in development Vite forwards them to
- * the Express server, and in production they are on the same address, so the
- * login cookie is sent automatically.
+ * Calls the API and returns `data` plus `meta` (paging details), or throws an
+ * ApiError with the server's message. Paths start with "/api/v1"; in
+ * development Vite forwards them to the Express server, and in production they
+ * are on the same address, so the login cookie is sent automatically.
  */
-export async function api<T>(method: Method, path: string, body?: unknown, timeoutMs = 20_000) {
+async function request<T>(method: Method, path: string, body?: unknown, timeoutMs = 20_000) {
   const headers: Record<string, string> = { Accept: "application/json" };
   // Requests that change something carry the anti-forgery header (PRD §19.3).
   if (method !== "GET") headers["X-Requested-With"] = "NexusFlow";
@@ -61,11 +61,28 @@ export async function api<T>(method: Method, path: string, body?: unknown, timeo
     const { code, message, details } = parsed.error;
     throw new ApiError(response.status, code, message, details);
   }
-  return parsed.data;
+  return { data: parsed.data, meta: parsed.meta ?? {} };
+}
+
+/** Calls the API and returns only `data`. */
+export async function api<T>(method: Method, path: string, body?: unknown, timeoutMs?: number) {
+  return (await request<T>(method, path, body, timeoutMs)).data;
 }
 
 export const apiGet = <T>(path: string, timeoutMs?: number) =>
   api<T>("GET", path, undefined, timeoutMs);
+/** A list endpoint: the items and the paging details (e.g. meta.nextCursor). */
+export const apiGetPage = <T, M>(path: string) =>
+  request<T>("GET", path) as Promise<{ data: T; meta: Partial<M> }>;
 export const apiPost = <T>(path: string, body?: unknown) => api<T>("POST", path, body ?? {});
+export const apiPut = <T>(path: string, body: unknown) => api<T>("PUT", path, body);
 export const apiPatch = <T>(path: string, body: unknown) => api<T>("PATCH", path, body);
-export const apiDelete = <T>(path: string) => api<T>("DELETE", path);
+export const apiDelete = <T>(path: string, body?: unknown) => api<T>("DELETE", path, body);
+
+/** True when the API said "you are over your plan's limit" (HTTP 402). */
+export const isPlanLimit = (error: unknown) =>
+  error instanceof ApiError && error.code === "PLAN_LIMIT_REACHED";
+
+/** The server's message for an error, or a general one for anything else. */
+export const errorMessage = (error: unknown) =>
+  error instanceof ApiError ? error.message : "Something went wrong. Please try again.";

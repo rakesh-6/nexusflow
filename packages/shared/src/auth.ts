@@ -175,5 +175,7 @@ export interface CurrentUser {
   timezone: string;
   emailVerified: boolean;
   hasPassword: boolean;
+  /** The workspace opened last, so "/" can return there. */
+  lastActiveWorkspaceId: string | null;
   createdAt: string;
 }

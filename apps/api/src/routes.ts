@@ -3,6 +3,8 @@ import { env } from "./config/env.ts";
 import { buildOpenApiDocument } from "./docs/openapi.ts";
 import { authRouter } from "./modules/auth/auth.routes.ts";
 import { healthRouter } from "./modules/health/health.routes.ts";
+import { invitationsRouter } from "./modules/organizations/invitations.routes.ts";
+import { organizationsRouter } from "./modules/organizations/organizations.routes.ts";
 import { usersRouter } from "./modules/users/users.routes.ts";
 
 // All version 1 API routes. Each feature module adds its router here.
@@ -11,6 +13,8 @@ export const apiRouter = Router();
 apiRouter.use("/health", healthRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/users", usersRouter);
+apiRouter.use("/orgs", organizationsRouter);
+apiRouter.use("/invitations", invitationsRouter);
 
 // The API documentation, outside production only (PRD §18.8).
 if (env.NODE_ENV !== "production") {

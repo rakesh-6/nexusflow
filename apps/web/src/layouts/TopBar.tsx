@@ -20,7 +20,6 @@ import {
 } from "../components/ui/dropdown-menu";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
 import { isRouteHandle } from "../lib/routeHandle";
-import { SAMPLE_UNREAD_COUNT } from "../lib/sampleData";
 
 const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
@@ -62,12 +61,11 @@ function Breadcrumbs({ context }: { context: WorkspaceContext }) {
 }
 
 // "New" menu. Each item comes alive in the phase that builds the feature.
-function NewMenu() {
+function NewMenu({ context }: { context: WorkspaceContext }) {
   const items = [
     { icon: SquarePen, label: "New task", phase: "Phase 5" },
     { icon: FolderPlus, label: "New project", phase: "Phase 4" },
     { icon: Users, label: "New team", phase: "Phase 4" },
-    { icon: UserPlus, label: "Invite people", phase: "Phase 3" },
   ];
   return (
     <DropdownMenu>
@@ -83,6 +81,13 @@ function NewMenu() {
             <span className="ml-auto text-xs text-muted-foreground">{item.phase}</span>
           </DropdownMenuItem>
         ))}
+        {context.can("members:invite") && (
+          <DropdownMenuItem asChild>
+            <Link to={context.settingsPath("org/invitations")}>
+              <UserPlus /> Invite people
+            </Link>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -120,19 +125,11 @@ export function TopBar({
             <span className="sr-only lg:hidden">Search</span>
           </Link>
         </Button>
-        <NewMenu />
-        <Button variant="ghost" size="icon-sm" asChild className="relative">
-          <Link
-            to={context.path("inbox")}
-            aria-label={`Notifications, ${SAMPLE_UNREAD_COUNT} unread`}
-          >
+        <NewMenu context={context} />
+        {/* The unread dot returns with real notifications in Phase 7. */}
+        <Button variant="ghost" size="icon-sm" asChild>
+          <Link to={context.path("inbox")} aria-label="Notifications">
             <Bell />
-            {SAMPLE_UNREAD_COUNT > 0 && (
-              <span
-                className="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary"
-                aria-hidden="true"
-              />
-            )}
           </Link>
         </Button>
       </div>

@@ -15,10 +15,7 @@ function greeting() {
   return "Good evening";
 }
 
-const GETTING_STARTED = [
-  { icon: FolderPlus, label: "Create your first project", phase: "Phase 4" },
-  { icon: CircleCheck, label: "Add and assign a task", phase: "Phase 5" },
-];
+const GETTING_STARTED = [{ icon: CircleCheck, label: "Add and assign a task", phase: "Phase 5" }];
 
 // Home (PRD §14.2): "My Focus" arrives in Phase 8. For now it shows the
 // getting-started checklist and the live system status from step 7a.
@@ -40,6 +37,22 @@ export default function HomePage() {
           Getting started
         </h2>
         <ul className="grid gap-3 sm:grid-cols-3">
+          {context && (
+            <li>
+              <Link
+                to={context.path("projects?new=1")}
+                className="flex h-full items-start gap-3 rounded-card border bg-card p-4 shadow-sm transition-colors hover:bg-surface"
+              >
+                <FolderPlus className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+                <div>
+                  <p className="text-sm font-medium">Create a project</p>
+                  <p className="text-xs text-muted-foreground">
+                    With a board, columns and milestones
+                  </p>
+                </div>
+              </Link>
+            </li>
+          )}
           {GETTING_STARTED.map((item) => (
             <li
               key={item.label}

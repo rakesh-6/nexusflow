@@ -4,8 +4,12 @@ _Order matters: finish each block before the next. Requirements: [PRD.md](PRD.md
 
 ## 1. Immediate next tasks
 
-1. **Try Phase 3 in the browser** (`pnpm dev`, http://localhost:5173): log in as `aarav@acme.example` / `Acme-demo-2026`; switch workspaces; open Settings → Members / Invitations / Usage / Audit log; create a new account and an organization via onboarding; invite it from Acme and accept in a private window (the invite link prints in the API terminal).
-2. **Start Phase 4** (teams, projects, labels, statuses, milestones; PRD §27).
+1. **Try Phase 4 in the browser** (`pnpm dev`, http://localhost:5173, log in as `aarav@acme.example` / `Acme-demo-2026`): Projects page and filters; open a project → Settings (columns, milestones, members, archive/restore); Teams → a team → members; Workspace settings → Labels; Settings → Projects trash.
+2. **Start Phase 5** (tasks, Kanban board with dnd-kit, List, Calendar, My Tasks; PRD §27). Ask before installing dnd-kit, Tiptap and TanStack Table.
+
+## Deferred from Phase 4 (listed in the PRD §27 Phase 4 tracker)
+
+- Project cover upload, project health (Phase 8), trash purge job (Phase 7), team activity/analytics tabs (Phase 8), rich-text descriptions (Phase 5 Tiptap), real-time `project:created` (Phase 6), drag-and-drop column order (Phase 5), Playwright E2E.
 
 ## 2. Deferred from Phase 3 (listed in PRD §27 Phase 3 tracker)
 
@@ -21,7 +25,6 @@ _Order matters: finish each block before the next. Requirements: [PRD.md](PRD.md
 
 | Phase | Content                                                                                                   | Depends on |
 | ----- | --------------------------------------------------------------------------------------------------------- | ---------- |
-| 4     | Teams, projects (create, key, statuses, milestones, archive, trash), labels; project shortcuts in sidebar | Phase 3    |
 | 5     | Tasks: numbering, statuses, assignees, subtasks, dependencies, Kanban (dnd-kit), List, Calendar, My Tasks | Phase 4    |
 | 6     | Comments, reactions, Socket.io real-time, presence                                                        | Phase 5    |
 | 7     | Notifications (in-app + email, reminders, pg-boss jobs), file attachments (Cloudinary)                    | Phase 6    |

@@ -8,6 +8,8 @@ import { MembersSettings } from "../../features/organizations/settings/MembersSe
 import { OrgGeneralSettings } from "../../features/organizations/settings/OrgGeneralSettings";
 import { PermissionsSettings } from "../../features/organizations/settings/PermissionsSettings";
 import { UsageSettings } from "../../features/organizations/settings/UsageSettings";
+import { AllTeamsSettings } from "../../features/projects/settings/AllTeamsSettings";
+import { TrashSettings } from "../../features/projects/settings/TrashSettings";
 import { useWorkspace, type WorkspaceContext } from "../../hooks/useWorkspace";
 import { NotFoundPage } from "../NotFoundPage";
 import { PlaceholderPage } from "../PlaceholderPage";
@@ -18,6 +20,8 @@ const ORG_SECTION_PAGES: Record<string, ComponentType<{ context: WorkspaceContex
   general: OrgGeneralSettings,
   members: MembersSettings,
   invitations: InvitationsSettings,
+  teams: AllTeamsSettings,
+  projects: TrashSettings,
   permissions: PermissionsSettings,
   usage: UsageSettings,
   audit: AuditLogSettings,

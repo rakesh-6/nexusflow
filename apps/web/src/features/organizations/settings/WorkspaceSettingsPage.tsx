@@ -17,6 +17,7 @@ import { Skeleton } from "../../../components/ui/skeleton";
 import { useWorkspace, type WorkspaceContext } from "../../../hooks/useWorkspace";
 import { errorMessage, isPlanLimit } from "../../../lib/api";
 import { useCurrentUser } from "../../auth/hooks";
+import { LabelsSection } from "../../projects/settings/LabelsSection";
 import {
   useArchiveWorkspace,
   useDeleteWorkspace,
@@ -275,6 +276,9 @@ export default function WorkspaceSettingsPage() {
       </SettingsSection>
       <SettingsSection title="Members" description="People who can open this workspace.">
         <MembersSection context={context} canManage={canManage} />
+      </SettingsSection>
+      <SettingsSection title="Labels" description="Tags shared by every project in this workspace.">
+        <LabelsSection context={context} />
       </SettingsSection>
       {can("workspace:create") && (
         <SettingsSection

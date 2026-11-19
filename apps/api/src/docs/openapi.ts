@@ -27,6 +27,8 @@ import {
 } from "@nexusflow/shared";
 import path from "node:path";
 import { z } from "zod";
+import { cursorMeta, flag, FORBIDDEN, ok, okPage, type Endpoint } from "./helpers.ts";
+import { PROJECT_ENDPOINTS } from "./projectEndpoints.ts";
 
 // API documentation in the OpenAPI 3.1 format (PRD §18.8), built from Zod
 // schemas with Zod's own z.toJSONSchema(). To document a new endpoint, add an
@@ -48,12 +50,6 @@ const ErrorResponse = z.object({
     requestId: z.string(),
   }),
 });
-
-const ok = <T extends z.ZodType>(data: T) => z.object({ success: z.literal(true), data });
-/** A list answer that also carries paging details in "meta". */
-const okPage = <T extends z.ZodType, M extends z.ZodType>(data: T, meta: M) =>
-  z.object({ success: z.literal(true), data, meta });
-const cursorMeta = z.object({ nextCursor: z.uuid().nullable() });
 
 const CurrentUser = z.object({
   id: z.uuid(),
@@ -89,7 +85,6 @@ const ReadyData = z.object({
   latencyMs: z.number().int(),
 });
 
-const flag = (name: string) => z.object({ [name]: z.literal(true) });
 const message = z.object({ message: z.string() });
 
 // Phase 3: organizations, workspaces, members and invitations
@@ -203,25 +198,9 @@ const ActivityEntry = z.object({
 });
 
 const NOT_MEMBER = "Not a member of this organization, or it does not exist (NOT_FOUND)";
-const FORBIDDEN = "Your role does not allow this (FORBIDDEN)";
-
 // ---------------------------------------------------------------------------
 // Endpoints
 // ---------------------------------------------------------------------------
-
-interface Endpoint {
-  method: "get" | "post" | "put" | "patch" | "delete";
-  path: string;
-  tag: string;
-  summary: string;
-  /** Needs a signed-in session cookie. */
-  auth?: boolean;
-  body?: z.ZodType;
-  /** The request works without a body too. */
-  optionalBody?: boolean;
-  /** Status code -> [description, response schema]. Errors use ErrorResponse. */
-  responses: Record<string, [string, z.ZodType?]>;
-}
 
 const ENDPOINTS: Endpoint[] = [
   {
@@ -837,6 +816,9 @@ const ENDPOINTS: Endpoint[] = [
       ],
     },
   },
+
+  // Phase 4: teams, projects, columns, milestones and labels
+  ...PROJECT_ENDPOINTS,
 ];
 
 // ---------------------------------------------------------------------------

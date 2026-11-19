@@ -1,14 +1,22 @@
+import type { ProjectSummary } from "@nexusflow/shared";
 import {
+  Archive,
   CalendarDays,
   ChartGantt,
   LayoutDashboard,
   List,
+  Lock,
   Settings,
   SquareKanban,
   type LucideIcon,
 } from "lucide-react";
-import { NavLink, Outlet, useParams } from "react-router";
-import { useWorkspace } from "../hooks/useWorkspace";
+import { NavLink, Outlet, useOutletContext, useParams } from "react-router";
+import { Alert } from "../components/ui/alert";
+import { Skeleton } from "../components/ui/skeleton";
+import { useProjectByKey } from "../features/projects/hooks";
+import { ProgressBar, ProjectStatusBadge } from "../features/projects/labels";
+import { useWorkspace, type WorkspaceContext } from "../hooks/useWorkspace";
+import { ApiError } from "../lib/api";
 import { cn } from "../lib/utils";
 import { NotFoundPage } from "./NotFoundPage";
 
@@ -22,24 +30,69 @@ const TABS: { path: string; label: string; icon: LucideIcon }[] = [
   { path: "settings", label: "Settings", icon: Settings },
 ];
 
-// Header and view tabs shared by every page of one project. Until projects come
-// from the API (Phase 4), the header shows only the key from the address.
+export interface ProjectOutletContext {
+  project: ProjectSummary;
+  context: WorkspaceContext;
+}
+
+/** The project shown by the surrounding ProjectLayout, for its tab pages. */
+export const useProjectOutlet = () => useOutletContext<ProjectOutletContext>();
+
+// Header and view tabs shared by every page of one project.
 export default function ProjectLayout() {
   const { projectKey = "" } = useParams();
   const context = useWorkspace();
-  if (!context || !projectKey) return <NotFoundPage />;
+  const query = useProjectByKey(
+    context?.organization.slug ?? "",
+    context?.workspace.slug ?? "",
+    projectKey,
+  );
+  if (!context) return <NotFoundPage />;
+  if (query.isPending) {
+    return (
+      <div className="space-y-3 border-b bg-card px-4 py-5 sm:px-6">
+        <Skeleton className="h-7 w-64" />
+        <Skeleton className="h-9 w-96 max-w-full" />
+      </div>
+    );
+  }
+  if (query.isError) {
+    return query.error instanceof ApiError && query.error.status === 404 ? (
+      <NotFoundPage />
+    ) : (
+      <div className="p-6">
+        <Alert variant="error">This project could not be loaded.</Alert>
+      </div>
+    );
+  }
 
-  const base = context.path(`projects/${projectKey}`);
+  const project = query.data;
+  const base = context.path(`projects/${project.key}`);
 
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-card px-4 pt-5 sm:px-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">Project</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+            {project.visibility === "PRIVATE" && (
+              <Lock className="size-4 text-muted-foreground" aria-label="Private project" />
+            )}
+            {project.name}
+          </h1>
           <span className="rounded-full border bg-surface px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {projectKey}
+            {project.key}
           </span>
+          <ProjectStatusBadge status={project.status} />
+          <div className="ml-auto hidden w-48 sm:block">
+            <ProgressBar value={project.progress} label="Project progress" />
+          </div>
         </div>
+        {project.status === "ARCHIVED" && (
+          <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <Archive className="size-4" aria-hidden="true" />
+            This project is archived and read-only.
+          </p>
+        )}
         <nav aria-label="Project views" className="-mb-px mt-4 flex gap-1 overflow-x-auto">
           {TABS.map((tab) => (
             <NavLink
@@ -61,7 +114,7 @@ export default function ProjectLayout() {
         </nav>
       </div>
       <div className="flex-1">
-        <Outlet />
+        <Outlet context={{ project, context } satisfies ProjectOutletContext} />
       </div>
     </div>
   );

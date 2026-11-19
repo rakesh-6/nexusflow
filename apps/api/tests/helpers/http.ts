@@ -24,6 +24,8 @@ export function createTestClient(domain: string) {
     agent.post(`/api/v1${path}`).set("X-Requested-With", "NexusFlow").send(body);
   const patch = (agent: Agent, path: string, body: object) =>
     agent.patch(`/api/v1${path}`).set("X-Requested-With", "NexusFlow").send(body);
+  const put = (agent: Agent, path: string, body: object) =>
+    agent.put(`/api/v1${path}`).set("X-Requested-With", "NexusFlow").send(body);
   const del = (agent: Agent, path: string) =>
     agent.delete(`/api/v1${path}`).set("X-Requested-With", "NexusFlow");
 
@@ -56,5 +58,5 @@ export function createTestClient(domain: string) {
     if (id) createdIds.push(id);
   };
 
-  return { app, newEmail, newAgent, post, patch, del, registerUser, cleanup, remember };
+  return { app, newEmail, newAgent, post, patch, put, del, registerUser, cleanup, remember };
 }

@@ -1,3 +1,4 @@
+
 # NexusFlow — Product Requirements Document (PRD)
 
 | Field | Value |
@@ -2412,6 +2413,20 @@ Deferred from Phase 3: organization and workspace logo upload and the workspace 
 - **Deliverables**: teams CRUD, members, leads, team pages (members, projects, activity); labels CRUD; projects CRUD with key generation/locking, cover upload, dates, priority, status lifecycle, visibility, archive/restore, soft delete + Trash + purge job; project members and roles; default statuses seeding and status management (add/rename/recolor/reorder/delete with reassignment); milestones CRUD; project list/grid with filters and progress/health placeholders (formulas implemented in Phase 8 but computed here); project settings page; project activity feed; WORKSPACE visibility and team-implied access in the resolver.
 - **Dependencies**: Phase 3.
 - **Acceptance criteria**: AC-TEAM-01…03, AC-PROJ-01…06 pass; cross-tenant matrix extended and passing; E2E: create team → team project → add member via team → verify access → archive project → restore; plan limit on active projects verified; status deletion reassigns tasks (tested with seeded tasks once Phase 5 lands, unit-tested here with fixtures).
+
+#### Phase 4 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 4.1 | Shared rules: project-role resolution (§12.4: owner/admin → manager, team lead → manager, team member → contributor, workspace member → viewer of WORKSPACE projects, guests capped at contributor), rights (`canManage`, `canAdminister` — team leads cannot delete or change columns, §12.3), key suggestion, schemas and response types | none | ✅ Done |
+| 4.2 | Teams API: create with a lead, rename, delete with "move" or "archive" for its projects, members with at least one lead | none | ✅ Done |
+| 4.3 | Projects API: list with progress (round(done/total×100), subtasks included), create with six default columns and the creator/owner as managers, FREE limit of 3 active projects per workspace, key lock after the first task, archive/restore to the previous status (archived = read-only), soft delete, 30-day trash and restore, members and roles (owner always manager, at least one manager), activity feed | none | ✅ Done |
+| 4.4 | Columns (add, rename, recolor, category, default, reorder, delete with task reassignment), milestones (progress, overdue), workspace labels (workspace admins and project managers) | none | ✅ Done |
+| 4.5 | Web: Projects page (cards, filters, "New project" with key suggestion), project header with status and progress, project settings (details, members, columns, milestones, recent activity, archive/delete), Teams and Team pages, labels in Workspace settings, organization Teams overview and Projects trash, project shortcuts in the sidebar, "New project/team" in the top bar | none | ✅ Done |
+
+Verification: 10 Phase 4 API tests (AC-PROJ-01…05, AC-TEAM-01…03, columns, milestones, labels, trash, tenant isolation for every project, team and label endpoint) and 10 access-rule unit tests pass against the Neon test branch; 92 operations in `openapi.json`; 11 page renders (owner and read-only member views) pass.
+
+Deferred from Phase 4: project cover image upload (needs Cloudinary keys; same signed-upload pattern as avatars); project health (formula in §11.12.3, Phase 8 with the dashboard); the purge job that permanently deletes trashed projects after 30 days (Phase 7, pg-boss); team activity and analytics tabs (Phase 8); rich-text project descriptions (plain text for now, stored as an editor document so Phase 5's Tiptap editor can open it); the `project:created` real-time event (Phase 6); drag-and-drop column reordering (up/down buttons for now; dnd-kit arrives with the board in Phase 5); the Playwright E2E journey.
 
 ### Phase 5 — Task management and project views (≈ 3 weeks)
 - **Deliverables**: task model and services (sequential numbering, statuses/categories, `completedAt`, assignees with notifications stubbed, labels, milestones, dates, hours, subtasks, dependencies with cycle detection, move with fractional indexing, optimistic concurrency, soft delete/restore, duplicate, bulk updates, filters/sort/cursor pagination, My Tasks, by-key lookup); activity logging with field diffs; task detail panel and full page (all properties, description editor with Tiptap, subtasks, dependencies, activity tab); Kanban board (dnd-kit, column management, quick add, filter bar); List view (TanStack Table, virtualization, inline editing, bulk bar, column settings); Calendar view (month/week, drag to reschedule, unscheduled panel); keyboard shortcuts and command palette; frontend optimistic updates and conflict handling. Real-time emission hooks are added but the socket gateway ships in Phase 6.

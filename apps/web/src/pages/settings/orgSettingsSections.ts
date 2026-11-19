@@ -37,14 +37,14 @@ export const ORG_SETTINGS_SECTIONS: Record<string, OrgSettingsSection> = {
     description: "All teams across workspaces.",
     permission: "members:manage",
     phase: "Phase 4",
-    comingSoon: "Review every team, its lead, members and projects.",
+    comingSoon: "",
   },
   projects: {
-    title: "Projects",
-    description: "All projects, including private ones, and the trash.",
+    title: "Projects trash",
+    description: "Deleted projects, restorable for 30 days.",
     permission: "members:manage",
     phase: "Phase 4",
-    comingSoon: "Archive, restore and delete projects, and recover them from the trash.",
+    comingSoon: "",
   },
   permissions: {
     title: "Roles and permissions",

@@ -10,14 +10,15 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 ## Current phase
 
-**Phase 3 — Organizations and workspaces: DONE (backend + frontend), committed.** Next: Phase 4 (teams and projects).
+**Phase 4 — Teams and projects: DONE and committed (the "Add Phase 4" commit).** Next: Phase 5 (tasks and the Kanban board), once the user approves its libraries.
 
-| Phase                                                | Status                                       | Commit    |
-| ---------------------------------------------------- | -------------------------------------------- | --------- |
-| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                            | `ff532f3` |
-| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green         | `64eb645` |
-| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, 93 tests pass (see PRD §27 tracker) | —         |
-| 4–12                                                 | ⬜ Not started                               | —         |
+| Phase                                                | Status                               | Commit        |
+| ---------------------------------------------------- | ------------------------------------ | ------------- |
+| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                    | `ff532f3`     |
+| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green | `64eb645`     |
+| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                    | `15068dd`     |
+| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done (see PRD §27 tracker)        | "Add Phase 4" |
+| 5–12                                                 | ⬜ Not started                       | —             |
 
 ## Features completed (verified)
 
@@ -54,6 +55,20 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 Deferred from Phase 3 (also in the PRD §27 tracker): logo upload and branding color, workspace activity page UI (API exists), audit-log CSV export, invitation-expiry job (Phase 7), redirects from old org slugs, Prisma tenant extension (§20.3), Playwright E2E journey. Guests see an explanation page until project sharing (Phase 4).
 
+## Phase 4 (done) — where things are
+
+| Part                                                                                    | Files                                                                                                          |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Access rules (§12.4), key suggestion, schemas, response types (10 unit tests)           | `packages/shared/src/projects.ts`, `projects.test.ts`                                                          |
+| Project access loader, accessible-projects filter, progress                             | `apps/api/src/modules/projects/access.ts`                                                                      |
+| Projects, members, trash, activity; columns and milestones; labels                      | `apps/api/src/modules/projects/{projects,structure,labels}.service.ts`, `projects.routes.ts`                   |
+| Teams and team members                                                                  | `apps/api/src/modules/teams/teams.{service,routes}.ts`                                                         |
+| Shared route helpers (`workspaceFor`, `idParam`), "may this person be picked" check     | `apps/api/src/modules/organizations/{requestContext,people}.ts`                                                |
+| API tests (10) and docs (37 new operations, in their own file)                          | `apps/api/tests/projects.test.ts`, `tests/helpers/orgs.ts`, `apps/api/src/docs/{projectEndpoints,helpers}.ts`  |
+| Web hooks, labels/badges, New project dialog                                            | `apps/web/src/features/projects/{hooks.ts,labels.tsx,NewProjectDialog.tsx}`                                    |
+| Pages: Projects, project settings, Teams, Team                                          | `apps/web/src/features/projects/pages/*`, `apps/web/src/pages/ProjectLayout.tsx` (header + `useProjectOutlet`) |
+| Settings sections: project details/members/columns/milestones, labels, trash, all teams | `apps/web/src/features/projects/settings/*`                                                                    |
+
 ## Known bugs and errors
 
 No open code bugs. (Fixed on 2026-11-18: DELETE workspace without a body now defaults to `{ deleteContents: false }`; the slow multi-request tests have a 120 s timeout — the Phase 3 file takes ~5.5 minutes against Neon.)
@@ -66,9 +81,11 @@ No open code bugs. (Fixed on 2026-11-18: DELETE workspace without a body now def
 
 ## Test status
 
-| Suite                                            | Result                                                        |
-| ------------------------------------------------ | ------------------------------------------------------------- |
-| `pnpm test` (full run 2026-11-18, 488 s)         | 93 tests pass: `packages/shared` 18, `apps/api` 75 (10 files) |
-| of which Phase 3 (`tests/organizations.test.ts`) | 18 pass (~5.5 minutes on its own against Neon)                |
-| Web page renders (temporary SSR check)           | 16 pass (owner and member views, signed-out invitation)       |
-| Typecheck / lint / format / web build            | Pass                                                          |
+| Suite                                            | Result                                                         |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| `pnpm test` (full run 2026-11-18, 917 s)         | 113 tests pass: `packages/shared` 28, `apps/api` 85 (11 files) |
+| of which Phase 3 (`tests/organizations.test.ts`) | 18 pass (~5.5 minutes on its own against Neon)                 |
+| Web page renders (temporary SSR check)           | 16 pass (owner and member views, signed-out invitation)        |
+| Phase 4 (`tests/projects.test.ts`)               | 10 pass (~7 minutes on its own against Neon)                   |
+| Phase 4 page renders                             | 11 pass (owner and read-only member views)                     |
+| Typecheck / lint / format / web build            | Pass                                                           |

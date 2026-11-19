@@ -3,16 +3,13 @@ import {
   CalendarDays,
   ChartColumn,
   ChartGantt,
-  FolderKanban,
   Inbox,
   LayoutDashboard,
   List,
   ListTodo,
   LockKeyhole,
   Search,
-  Settings,
   SquareKanban,
-  Users,
 } from "lucide-react";
 import { lazy } from "react";
 import { Navigate, type RouteObject } from "react-router";
@@ -20,7 +17,7 @@ import { GuestOnly, OrganizationRedirect, RequireAuth, RootRedirect } from "./fe
 import { AppShell } from "./layouts/AppShell";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { crumb } from "./lib/routeHandle";
-import { TaskPage, TeamPage } from "./pages/DynamicPages";
+import { TaskPage } from "./pages/DynamicPages";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PlaceholderPage, type PlaceholderPageProps } from "./pages/PlaceholderPage";
 import { ORG_SETTINGS_SECTIONS } from "./pages/settings/orgSettingsSections";
@@ -44,6 +41,10 @@ const InvitePage = lazy(() => import("./features/organizations/pages/InvitePage"
 const WorkspaceSettingsPage = lazy(
   () => import("./features/organizations/settings/WorkspaceSettingsPage"),
 );
+const ProjectsPage = lazy(() => import("./features/projects/pages/ProjectsPage"));
+const ProjectSettingsPage = lazy(() => import("./features/projects/pages/ProjectSettingsPage"));
+const TeamsPage = lazy(() => import("./features/projects/pages/TeamsPage"));
+const TeamPage = lazy(() => import("./features/projects/pages/TeamPage"));
 
 /** A route that shows a placeholder page and its breadcrumb label. */
 function placeholder(path: string, page: PlaceholderPageProps, label = page.title): RouteObject {
@@ -186,13 +187,7 @@ export const routes: RouteObject[] = [
         comingSoon: "Live notifications with All, Unread and Mentions tabs.",
         icon: Inbox,
       }),
-      placeholder("projects", {
-        title: "Projects",
-        description: "Every project in this workspace.",
-        phase: "Phase 4",
-        comingSoon: "Project cards with progress, health, owners and dates.",
-        icon: FolderKanban,
-      }),
+      { path: "projects", element: <ProjectsPage />, handle: crumb("Projects") },
       {
         path: "projects/:projectKey",
         element: <ProjectLayout />,
@@ -235,18 +230,7 @@ export const routes: RouteObject[] = [
             comingSoon: "Completion, overdue tasks, workload per person and recent activity.",
             icon: LayoutDashboard,
           }),
-          placeholder(
-            "settings",
-            {
-              title: "Project settings",
-              description: "Details, members, statuses and milestones.",
-              phase: "Phase 4",
-              comingSoon:
-                "Edit the project, manage members and roles, and customize board columns.",
-              icon: Settings,
-            },
-            "Settings",
-          ),
+          { path: "settings", element: <ProjectSettingsPage />, handle: crumb("Settings") },
         ],
       },
       {
@@ -254,13 +238,7 @@ export const routes: RouteObject[] = [
         element: <TaskPage />,
         handle: crumb((params) => params["taskKey"] ?? ""),
       },
-      placeholder("teams", {
-        title: "Teams",
-        description: "Groups of people who work together.",
-        phase: "Phase 4",
-        comingSoon: "Teams with leads, members and their projects.",
-        icon: Users,
-      }),
+      { path: "teams", element: <TeamsPage />, handle: crumb("Teams") },
       {
         path: "teams/:teamSlug",
         element: <TeamPage />,

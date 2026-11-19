@@ -62,11 +62,8 @@ function Breadcrumbs({ context }: { context: WorkspaceContext }) {
 
 // "New" menu. Each item comes alive in the phase that builds the feature.
 function NewMenu({ context }: { context: WorkspaceContext }) {
-  const items = [
-    { icon: SquarePen, label: "New task", phase: "Phase 5" },
-    { icon: FolderPlus, label: "New project", phase: "Phase 4" },
-    { icon: Users, label: "New team", phase: "Phase 4" },
-  ];
+  // Workspace admins (and org owners/admins) create teams; any member creates projects.
+  const canCreateTeam = context.workspace.role === "WORKSPACE_ADMIN";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -75,12 +72,24 @@ function NewMenu({ context }: { context: WorkspaceContext }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {items.map((item) => (
-          <DropdownMenuItem key={item.label} disabled>
-            <item.icon /> {item.label}
-            <span className="ml-auto text-xs text-muted-foreground">{item.phase}</span>
+        <DropdownMenuItem disabled>
+          <SquarePen /> New task
+          <span className="ml-auto text-xs text-muted-foreground">Phase 5</span>
+        </DropdownMenuItem>
+        {!context.workspace.archived && (
+          <DropdownMenuItem asChild>
+            <Link to={context.path("projects?new=1")}>
+              <FolderPlus /> New project
+            </Link>
           </DropdownMenuItem>
-        ))}
+        )}
+        {canCreateTeam && (
+          <DropdownMenuItem asChild>
+            <Link to={context.path("teams?new=1")}>
+              <Users /> New team
+            </Link>
+          </DropdownMenuItem>
+        )}
         {context.can("members:invite") && (
           <DropdownMenuItem asChild>
             <Link to={context.settingsPath("org/invitations")}>

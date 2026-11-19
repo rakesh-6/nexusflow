@@ -40,7 +40,7 @@ NexusFlow: multi-tenant SaaS project management and team collaboration (Linear/C
 
 - Phase 1 ✅ (commit `ff532f3`), Phase 2 ✅ (commit `64eb645`, CI green, 57 API tests).
 - Phase 3 ✅ (organizations and workspaces: backend, frontend, docs, PRD tracker), committed in the "Add Phase 3" commit. Full `pnpm test` passes (75 API + 18 shared tests; 18 of them Phase 3); 55 operations in `openapi.json`; 16 page renders pass.
-- **Next: Phase 4** (teams and projects).
+- Phase 4 ✅ (teams and projects: access rules, teams, projects, columns, milestones, labels, trash; API + web), committed in the "Add Phase 4" commit. Full `pnpm test` passes (85 API + 28 shared tests, ~15 minutes); 92 operations in `openapi.json`. Next: Phase 5.
 
 ## 5. Completed functionality (verified in code and tests)
 
@@ -50,7 +50,7 @@ Phase 3: organizations, members, invitations, workspaces, plan limits and tenant
 
 ## 6. Current task and progress
 
-Phase 3 is finished and committed; Phase 4 is next. The web app gets everything from the API: `useWorkspace()` reads `GET /orgs/:org/context` (`sampleData.ts` is deleted). Web cache rules live in `apps/web/src/features/organizations/hooks.ts`: after a delete/leave, `refreshAfterRemoval` waits for fresh lists before navigating to `/`; a created/renamed workspace is written into the cached context at once (`cacheWorkspace`) so its new address never flashes "not found".
+Phase 4 is finished and committed. Project access is decided in one place, `packages/shared/src/projects.ts#projectAccess` (PRD §12.4), used by the API (`apps/api/src/modules/projects/access.ts#loadProject`, 404 without access) and shown to the web through each project's `access` field. Project pages get the project from `useProjectOutlet()` (`apps/web/src/pages/ProjectLayout.tsx`). The web app gets everything from the API: `useWorkspace()` reads `GET /orgs/:org/context` (`sampleData.ts` is deleted). Web cache rules live in `apps/web/src/features/organizations/hooks.ts`: after a delete/leave, `refreshAfterRemoval` waits for fresh lists before navigating to `/`; a created/renamed workspace is written into the cached context at once (`cacheWorkspace`) so its new address never flashes "not found".
 
 ## 7. Important files and directories
 
@@ -85,7 +85,8 @@ See TODO.md: the deferred Phase 3 items, then Phases 4–12 per PRD §27 (MVP en
 
 ## 11. Exact next steps (in order)
 
-1. Start Phase 4 (PRD §27: teams, projects, labels, statuses, milestones). Re-add the sidebar's project shortcuts and the real project header in `apps/web/src/pages/ProjectLayout.tsx` from the projects API. Add an outsider (404) test for every new org endpoint.
+1. Get the user's approval for the Phase 5 libraries: dnd-kit (core 6.3, sortable 10, utilities 3), fractional-indexing 4 (API), Tiptap 3.34 (the PRD says Tiptap 2; update the PRD if 3 is used), TanStack Table 8.21 + Virtual 3.14. date-fns and cmdk are optional (own date helpers; ⌘K palette could move to Phase 8).
+2. Start Phase 5 (PRD §27: tasks, Kanban, List, Calendar, My Tasks). Ask before installing dnd-kit, Tiptap and TanStack Table. Tasks must use `loadProject` + `assertNotArchived` + `access.canContribute`; bump `Project.taskSequence` for numbering (it also locks the key). Add an outsider (404) test for every new endpoint (helpers in `apps/api/tests/helpers/orgs.ts`).
 
 ## 12. How to avoid breaking existing functionality
 

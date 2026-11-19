@@ -13,6 +13,8 @@ import {
 import { NavLink } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tooltip } from "../components/ui/tooltip";
+import { useProjects } from "../features/projects/hooks";
+import { PROJECT_STATUS_DOTS } from "../features/projects/labels";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
 import { cn } from "../lib/utils";
 import { UserMenu } from "./UserMenu";
@@ -61,6 +63,49 @@ function NavItem({ to, icon: Icon, label, collapsed, badge }: NavItemProps) {
   return collapsed ? <Tooltip content={label}>{link}</Tooltip> : link;
 }
 
+const MAX_SHORTCUTS = 8;
+
+// Your open projects in this workspace, for quick access (PRD §14.1).
+function ProjectShortcuts({ context }: { context: WorkspaceContext }) {
+  const { data: projects = [] } = useProjects(context.organization.slug, context.workspace.slug);
+  if (projects.length === 0) return null;
+  return (
+    <nav aria-label="Projects" className="flex min-h-0 flex-col gap-0.5">
+      <h2 className="px-2.5 pb-1 text-xs font-semibold text-muted-foreground">Projects</h2>
+      <div className="flex flex-col gap-0.5 overflow-y-auto">
+        {projects.slice(0, MAX_SHORTCUTS).map((project) => (
+          <NavLink
+            key={project.id}
+            to={context.path(`projects/${project.key}`)}
+            className={({ isActive }) =>
+              cn(
+                "flex h-8 items-center gap-2.5 rounded-control px-2.5 text-sm transition-colors duration-150",
+                isActive
+                  ? "bg-card font-medium text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+              )
+            }
+          >
+            <span
+              className={cn("size-2.5 shrink-0 rounded-[3px]", PROJECT_STATUS_DOTS[project.status])}
+              aria-hidden="true"
+            />
+            <span className="truncate">{project.name}</span>
+          </NavLink>
+        ))}
+        {projects.length > MAX_SHORTCUTS && (
+          <NavLink
+            to={context.path("projects")}
+            className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            All {projects.length} projects
+          </NavLink>
+        )}
+      </div>
+    </nav>
+  );
+}
+
 interface SidebarContentProps {
   context: WorkspaceContext;
   collapsed: boolean;
@@ -72,7 +117,6 @@ interface SidebarContentProps {
 export function SidebarContent({ context, collapsed, onToggleCollapse }: SidebarContentProps) {
   const { path, settingsPath } = context;
 
-  // The project shortcuts list returns in Phase 4, when projects come from the API.
   return (
     <div className="flex h-full flex-col gap-4 p-3">
       <WorkspaceSwitcher context={context} collapsed={collapsed} />
@@ -85,6 +129,8 @@ export function SidebarContent({ context, collapsed, onToggleCollapse }: Sidebar
         <NavItem to={path("teams")} icon={Users} label="Teams" collapsed={collapsed} />
         <NavItem to={path("insights")} icon={ChartColumn} label="Insights" collapsed={collapsed} />
       </nav>
+
+      {!collapsed && <ProjectShortcuts context={context} />}
 
       <div className="mt-auto flex flex-col gap-0.5">
         <NavItem to={settingsPath()} icon={Settings} label="Settings" collapsed={collapsed} />

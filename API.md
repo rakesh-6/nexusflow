@@ -1,6 +1,6 @@
 # NexusFlow — API
 
-_Base path `/api/v1`. Generated OpenAPI spec (Phases 1–3, 55 operations): [`apps/api/openapi.json`](apps/api/openapi.json), served at `/api/v1/docs/openapi.json` outside production. Router: [`apps/api/src/routes.ts`](apps/api/src/routes.ts)._
+_Base path `/api/v1`. Generated OpenAPI spec (Phases 1–4, 92 operations): [`apps/api/openapi.json`](apps/api/openapi.json), served at `/api/v1/docs/openapi.json` outside production. Router: [`apps/api/src/routes.ts`](apps/api/src/routes.ts)._
 
 ## Conventions
 
@@ -91,7 +91,31 @@ Response types are shared with the web app in `packages/shared/src/organizations
 | POST   | `/invitations/:token/accept`  | Verified | `{orgSlug, workspaceSlug}`; 403 `INVITATION_EMAIL_MISMATCH`; 402 if plan full                 |
 | POST   | `/invitations/:token/decline` | Auth     | `{declined:true}`                                                                             |
 
+## Teams, projects, columns, milestones, labels (Phase 4) — `apps/api/src/modules/{teams,projects}/`
+
+Project access follows PRD §12.4 (`packages/shared/src/projects.ts#projectAccess`): owners/admins and workspace admins manage every project; team leads manage team projects but cannot delete them or change columns/milestones; team members contribute; workspace members view WORKSPACE projects; guests only see projects they were added to (at most contributor). No access → 404. Every project answer includes `access {role, canManage, canAdminister, canContribute}`.
+
+| Method                      | Path (under `/orgs/:org`)                        | Who                         | Notes                                                                       |
+| --------------------------- | ------------------------------------------------ | --------------------------- | --------------------------------------------------------------------------- |
+| GET / POST                  | `/workspaces/:ws/teams`                          | member / workspace admin    | `meta.canCreate`; POST `{name, slug, description?, leadId}`                 |
+| GET / PATCH / DELETE        | `/teams/:teamId`                                 | member / lead / ws admin    | DELETE `{projectsAction: move\|archive}` (optional, default move)           |
+| GET / POST / PATCH / DELETE | `/teams/:teamId/members[/:userId]`               | lead or ws admin            | 409 `LAST_LEAD`                                                             |
+| GET / POST                  | `/workspaces/:ws/projects`                       | member (not guests)         | `?status&teamId&q&includeArchived`; 402 (3 active on FREE); 409 `KEY_TAKEN` |
+| GET                         | `/workspaces/:ws/projects/by-key/:key`           | project access              |                                                                             |
+| GET / PATCH / DELETE        | `/projects/:projectId`                           | access / manager / admin    | 409 `KEY_LOCKED`, `PROJECT_ARCHIVED`; DELETE → trash                        |
+| POST                        | `/projects/:projectId/archive` · `/restore`      | manager                     | restore → previous status; 402 if over the limit                            |
+| GET                         | `/projects/:projectId/activity`                  | access                      | `?cursor&limit`, `meta.nextCursor`                                          |
+| GET / POST / PATCH / DELETE | `/projects/:projectId/members[/:userId]`         | manager                     | 409 `OWNER_IS_MANAGER`, `LAST_MANAGER`; guests allowed                      |
+| GET / POST / PATCH / DELETE | `/projects/:projectId/statuses[/:statusId]`      | admin (not team lead)       | ≤ 50; DELETE `{targetStatusId}` moves tasks; 409 `STATUS_NAME_TAKEN`        |
+| PUT                         | `/projects/:projectId/statuses/reorder`          | admin                       | `{statusIds[]}` — every column exactly once                                 |
+| GET / POST / PATCH / DELETE | `/projects/:projectId/milestones[/:milestoneId]` | admin                       | answers the full list; `overdue` = open and past due                        |
+| GET / POST                  | `/workspaces/:ws/labels`                         | member / ws admin or any PM | `meta.canManage`; 409 `LABEL_NAME_TAKEN`                                    |
+| PATCH / DELETE              | `/labels/:labelId`                               | ws admin or PM in workspace |                                                                             |
+| GET                         | `/trash` · POST `/projects/:projectId/undelete`  | org owner/admin             | 30 days; 402 on restore if over the limit                                   |
+
 ## Known API issues
 
 1. Old organization slugs are stored in `slugHistory` but no redirect from old slugs exists yet.
 2. Invitation expiry is applied when an invitation is opened; no background job marks them EXPIRED (Phase 7 jobs).
+3. Trashed projects are not purged after 30 days yet (they just stop being restorable); the purge job comes with pg-boss in Phase 7.
+4. Project cover upload (`/projects/:id/cover/sign|confirm`) is not built yet.

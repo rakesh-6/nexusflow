@@ -24,6 +24,8 @@ import {
 import { currentTenant, loadTenant, requireOrgPermission } from "../../middleware/tenant.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
+import { projectsRouter } from "../projects/projects.routes.ts";
+import { teamsRouter } from "../teams/teams.routes.ts";
 import {
   createInvitations,
   listPendingInvitations,
@@ -41,6 +43,7 @@ import {
   transferOwnership,
   updateOrganization,
 } from "./organizations.service.ts";
+import { workspaceFor } from "./requestContext.ts";
 import {
   addWorkspaceMember,
   assertCanManage,
@@ -48,7 +51,6 @@ import {
   deleteWorkspace,
   listWorkspaceActivity,
   listWorkspaceMembers,
-  loadWorkspace,
   removeWorkspaceMember,
   setArchived,
   toWorkspaceDto,
@@ -74,6 +76,10 @@ const org = Router({ mergeParams: true });
 organizationsRouter.use("/:orgSlug", requireAuth, loadTenant, org);
 
 const auth = (req: Request) => ({ user: currentAuth(req).user, tenant: currentTenant(req) });
+
+// Teams, projects and labels (Phase 4) live in their own modules.
+org.use(teamsRouter);
+org.use(projectsRouter);
 
 // --- The organization itself ------------------------------------------------
 
@@ -257,15 +263,6 @@ org.post("/workspaces", requireOrgPermission("workspace:create"), async (req, re
   const workspace = await createWorkspace(tenant, user, body, req);
   sendSuccess(res, toWorkspaceDto(workspace, "WORKSPACE_ADMIN"), 201);
 });
-
-const workspaceParams = z.object({ workspaceSlug: z.string().min(1).max(60) });
-
-/** Loads the workspace named in the address, or answers "not found". */
-async function workspaceFor(req: Request) {
-  const { params } = validateRequest(req, { params: workspaceParams.passthrough() });
-  const { user, tenant } = auth(req);
-  return { user, tenant, ...(await loadWorkspace(tenant, params.workspaceSlug, user.id)) };
-}
 
 org.get("/workspaces/:workspaceSlug", async (req, res) => {
   const { workspace, role } = await workspaceFor(req);

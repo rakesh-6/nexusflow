@@ -1,5 +1,5 @@
 import { ChevronsUpDown, Plus } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   DropdownMenu,
@@ -12,9 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { useMyOrganizations } from "../features/organizations/hooks";
-import { NewWorkspaceDialog } from "../features/organizations/NewWorkspaceDialog";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
 import { cn } from "../lib/utils";
+
+// Loaded on first open: it brings the form libraries, which the shell does not need.
+const NewWorkspaceDialog = lazy(() =>
+  import("../features/organizations/NewWorkspaceDialog").then((module) => ({
+    default: module.NewWorkspaceDialog,
+  })),
+);
 
 // The menu at the top of the sidebar: shows where you are and lets you jump to
 // any workspace of any organization you belong to (PRD §11.2.3).
@@ -90,7 +96,15 @@ export function WorkspaceSwitcher({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <NewWorkspaceDialog orgSlug={organization.slug} open={creating} onOpenChange={setCreating} />
+      {creating && (
+        <Suspense fallback={null}>
+          <NewWorkspaceDialog
+            orgSlug={organization.slug}
+            open={creating}
+            onOpenChange={setCreating}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

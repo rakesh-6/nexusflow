@@ -75,6 +75,9 @@ export const apiGet = <T>(path: string, timeoutMs?: number) =>
 export const apiGetPage = <T, M>(path: string) =>
   request<T>("GET", path) as Promise<{ data: T; meta: Partial<M> }>;
 export const apiPost = <T>(path: string, body?: unknown) => api<T>("POST", path, body ?? {});
+/** A POST whose answer also carries details in "meta". */
+export const apiPostPage = <T, M>(path: string, body?: unknown) =>
+  request<T>("POST", path, body ?? {}) as Promise<{ data: T; meta: Partial<M> }>;
 export const apiPut = <T>(path: string, body: unknown) => api<T>("PUT", path, body);
 export const apiPatch = <T>(path: string, body: unknown) => api<T>("PATCH", path, body);
 export const apiDelete = <T>(path: string, body?: unknown) => api<T>("DELETE", path, body);

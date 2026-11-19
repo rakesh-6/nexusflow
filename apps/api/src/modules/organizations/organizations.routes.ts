@@ -21,10 +21,17 @@ import {
   requireRecentAuth,
   requireVerified,
 } from "../../middleware/auth.ts";
-import { currentTenant, loadTenant, requireOrgPermission } from "../../middleware/tenant.ts";
+import {
+  currentTenant,
+  loadTenant,
+  recheckAccessAfter,
+  requireOrgPermission,
+} from "../../middleware/tenant.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
+import { commentsRouter } from "../comments/comments.routes.ts";
 import { projectsRouter } from "../projects/projects.routes.ts";
+import { tasksRouter } from "../tasks/tasks.routes.ts";
 import { teamsRouter } from "../teams/teams.routes.ts";
 import {
   createInvitations,
@@ -77,9 +84,14 @@ organizationsRouter.use("/:orgSlug", requireAuth, loadTenant, org);
 
 const auth = (req: Request) => ({ user: currentAuth(req).user, tenant: currentTenant(req) });
 
-// Teams, projects and labels (Phase 4) live in their own modules.
+// Changes to members, roles and workspaces make live connections re-check their rooms.
+org.use(["/members", "/workspaces", "/leave", "/transfer-ownership"], recheckAccessAfter);
+
+// Teams, projects and labels (Phase 4) and tasks (Phase 5) live in their own modules.
 org.use(teamsRouter);
 org.use(projectsRouter);
+org.use(tasksRouter);
+org.use(commentsRouter); // comments and reactions (Phase 6)
 
 // --- The organization itself ------------------------------------------------
 
@@ -95,12 +107,18 @@ org.patch("/", requireOrgPermission("org:update"), async (req, res) => {
   sendSuccess(res, { name: updated.name, slug: updated.slug });
 });
 
-org.delete("/", requireOrgPermission("org:delete"), requireRecentAuth, async (req, res) => {
-  const { body } = validateRequest(req, { body: deleteOrganizationSchema });
-  const { user, tenant } = auth(req);
-  await deleteOrganization(tenant, user, body.confirmSlug, req);
-  sendSuccess(res, { deleted: true });
-});
+org.delete(
+  "/",
+  recheckAccessAfter,
+  requireOrgPermission("org:delete"),
+  requireRecentAuth,
+  async (req, res) => {
+    const { body } = validateRequest(req, { body: deleteOrganizationSchema });
+    const { user, tenant } = auth(req);
+    await deleteOrganization(tenant, user, body.confirmSlug, req);
+    sendSuccess(res, { deleted: true });
+  },
+);
 
 org.post(
   "/transfer-ownership",

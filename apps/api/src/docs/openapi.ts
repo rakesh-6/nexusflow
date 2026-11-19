@@ -28,7 +28,10 @@ import {
 import path from "node:path";
 import { z } from "zod";
 import { cursorMeta, flag, FORBIDDEN, ok, okPage, type Endpoint } from "./helpers.ts";
+import { COMMENT_ENDPOINTS } from "./commentEndpoints.ts";
+import { NOTIFICATION_ENDPOINTS } from "./notificationEndpoints.ts";
 import { PROJECT_ENDPOINTS } from "./projectEndpoints.ts";
+import { TASK_ENDPOINTS } from "./taskEndpoints.ts";
 
 // API documentation in the OpenAPI 3.1 format (PRD §18.8), built from Zod
 // schemas with Zod's own z.toJSONSchema(). To document a new endpoint, add an
@@ -819,6 +822,15 @@ const ENDPOINTS: Endpoint[] = [
 
   // Phase 4: teams, projects, columns, milestones and labels
   ...PROJECT_ENDPOINTS,
+
+  // Phase 5: tasks, board, links, bulk changes, My Tasks
+  ...TASK_ENDPOINTS,
+
+  // Phase 6: comments, mentions and reactions
+  ...COMMENT_ENDPOINTS,
+
+  // Phase 7: notifications and their settings
+  ...NOTIFICATION_ENDPOINTS,
 ];
 
 // ---------------------------------------------------------------------------

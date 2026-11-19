@@ -6,6 +6,7 @@ import {
   updateTeamSchema,
 } from "@nexusflow/shared";
 import { Router, type Request } from "express";
+import { recheckAccessAfter } from "../../middleware/tenant.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
 import { actorAndTenant, idParam, workspaceFor } from "../organizations/requestContext.ts";
@@ -22,6 +23,9 @@ import {
 
 // Teams and their members (PRD §18.5). Mounted under /orgs/:orgSlug after loadTenant.
 export const teamsRouter = Router({ mergeParams: true });
+
+// Team changes (members, leads, deletion) change project access: live connections re-check.
+teamsRouter.use("/teams", recheckAccessAfter);
 
 async function teamFor(req: Request) {
   const { user, tenant } = actorAndTenant(req);

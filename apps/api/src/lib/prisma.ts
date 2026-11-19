@@ -9,6 +9,12 @@ const adapter = new PrismaPg({
   // Neon's free tier pauses when idle; waking up can take a few seconds.
   connectionTimeoutMillis: 15_000,
   max: 10,
+  // A connection that died quietly (Wi-Fi drop, the laptop sleeping) must not
+  // make a request wait forever: a query gives up after 30 s, and idle
+  // connections are checked and closed before the network forgets them.
+  query_timeout: 30_000,
+  keepAlive: true,
+  idleTimeoutMillis: 60_000,
 });
 
 export const prisma = new PrismaClient({

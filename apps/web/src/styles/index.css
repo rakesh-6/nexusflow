@@ -104,6 +104,59 @@
   }
 }
 
+/* Rich text in task descriptions (the Tiptap editor's output). */
+.prose-task > * + * {
+  margin-top: 0.5rem;
+}
+.prose-task h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.prose-task h3 {
+  font-weight: 600;
+}
+.prose-task ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose-task ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.prose-task blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+.prose-task code {
+  border-radius: 4px;
+  background-color: var(--color-surface);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.85em;
+}
+.prose-task pre {
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  padding: 0.5rem 0.75rem;
+}
+.prose-task a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.mention {
+  border-radius: 4px;
+  padding: 0 0.15rem;
+  font-weight: 500;
+  color: var(--color-primary);
+}
+.prose-task p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--color-muted-foreground);
+}
+
 /* Respect people who turn off animations in their system settings. */
 @media (prefers-reduced-motion: reduce) {
   *,

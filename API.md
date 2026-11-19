@@ -113,6 +113,69 @@ Project access follows PRD §12.4 (`packages/shared/src/projects.ts#projectAcces
 | PATCH / DELETE              | `/labels/:labelId`                               | ws admin or PM in workspace |                                                                             |
 | GET                         | `/trash` · POST `/projects/:projectId/undelete`  | org owner/admin             | 30 days; 402 on restore if over the limit                                   |
 
+## Tasks (Phase 5) — `apps/api/src/modules/tasks/`
+
+A task is visible exactly when its project is: every route loads the task's project first, so people without access get 404. Viewers read; contributors and managers write; contributors delete only tasks they created. Archived projects are read-only (409 `PROJECT_ARCHIVED`). Task answers carry a `version`: send it back with every change; a stale one gets 409 `VERSION_CONFLICT` and `error.details.current` holds the latest task. Dates are plain `YYYY-MM-DD`. Order inside a column is the text key `position` (sort as plain text).
+
+| Method               | Path (under `/orgs/:org`)                     | Who                  | Notes                                                                                                                                                                                             |
+| -------------------- | --------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET / POST           | `/projects/:projectId/tasks`                  | access / contributor | GET filters: `statusId category priority assigneeId=me\|unassigned labelId milestoneId parentTaskId=null dueFrom dueTo hasDueDate overdue q sort=-priority cursor limit(≤200)`; POST `{title, …}` |
+| GET                  | `/projects/:projectId/board`                  | access               | every column: first 200 cards, `total`, `nextCursor` (continue with the task list: `statusId`, `parentTaskId=null`, `sort=position`, `cursor`)                                                    |
+| GET                  | `/projects/:projectId/assignable`             | access               | contributors and managers (viewers cannot be assigned)                                                                                                                                            |
+| POST                 | `/projects/:projectId/tasks/bulk`             | contributor          | `{taskIds ≤ 100, set{…}}` or `{taskIds, action:"delete"}`; one transaction, one history row per task                                                                                              |
+| GET                  | `/projects/:projectId/tasks/trash`            | access               | deleted in the last 30 days                                                                                                                                                                       |
+| GET                  | `/workspaces/:ws/tasks/by-key/:taskKey`       | access               | `NEX-42`, any letter case                                                                                                                                                                         |
+| GET                  | `/workspaces/:ws/my-tasks`                    | member               | open tasks assigned to you, grouped Overdue / Today / This week / Later / No date in your time zone                                                                                               |
+| GET / PATCH / DELETE | `/tasks/:taskId`                              | access / contributor | PATCH `{version, …}` (title, description, statusId, priority, assigneeIds, labelIds, milestoneId, dates, hours, parentTaskId); 400 `MAX_DEPTH`, `STATUS_NOT_IN_PROJECT`; DELETE → trash           |
+| POST                 | `/tasks/:taskId/move`                         | contributor          | `{statusId, afterTaskId?, beforeTaskId?, version}`; `meta.renumbered` when the column's keys were rewritten                                                                                       |
+| POST                 | `/tasks/:taskId/restore` · `/duplicate`       | contributor          | restore within 30 days (409 `PARENT_DELETED`); duplicate copies subtasks and labels, title gets "(copy)"                                                                                          |
+| GET                  | `/tasks/:taskId/activity`                     | access               | `?cursor&limit`; one entry per request with a `changes[]` list of `{field, from, to}`                                                                                                             |
+| POST / DELETE        | `/tasks/:taskId/dependencies[/:dependencyId]` | contributor          | `{otherTaskId, direction: BLOCKED_BY\|BLOCKS}`; 409 `DEPENDENCY_CYCLE`, `DEPENDENCY_EXISTS`                                                                                                       |
+
+## Comments and reactions (Phase 6) — `apps/api/src/modules/comments/`
+
+Comments belong to a task and are visible exactly when the task is (404 otherwise). Contributors and managers write; viewers read and react. The body is editor JSON (≤ 20 kB, same allow-list as descriptions); mentions `{type:"mention", attrs:{id,label}}` of people who cannot open the project are turned into plain "@name" text. Each new comment asks for notifications (MENTIONED for people mentioned, TASK_COMMENTED for assignees, the reporter and earlier commenters; never the author) through `apps/api/src/lib/notifications.ts`; Phase 7 delivers them.
+
+| Method         | Path (under `/orgs/:org`)        | Who                        | Notes                                                                                                  |
+| -------------- | -------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| GET / POST     | `/tasks/:taskId/comments`        | access / contributor       | oldest first with `replies[]`; POST `{body, parentCommentId?}`; 400 `MAX_DEPTH` for a reply to a reply |
+| GET            | `/tasks/:taskId/mentionable`     | access                     | everyone who can open the project                                                                      |
+| PATCH / DELETE | `/comments/:commentId`           | author / author or manager | PATCH `{body}` sets `editedAt`; DELETE leaves a "deleted" placeholder while replies exist              |
+| POST           | `/comments/:commentId/reactions` | access                     | `{emoji}` toggles; answers the comment's `[{emoji, count, userIds}]`                                   |
+
+## Notifications (Phase 7) — `apps/api/src/modules/notifications/`
+
+Your own notifications, across your organizations (only organizations you still belong to). New ones also arrive live as `notification:new` in your `user:<id>` socket room. Preferences default to: everything in the app; email for assignment, mention, invitation, due soon and overdue.
+
+| Method    | Path                                                                  | Notes                                                 |
+| --------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| GET       | `/notifications`                                                      | `?unread=true&mentions=true&orgId&cursor&limit(≤100)` |
+| GET       | `/notifications/unread-count`                                         | `{total, byOrg: {orgId: count}}`                      |
+| POST      | `/notifications/:id/read` · `/:id/unread` · `/notifications/read-all` | read-all `{orgId?}` → `{updated}`; others' ids → 404  |
+| GET / PUT | `/users/me/notification-preferences`                                  | PUT `{preferences: [{type, inApp, email}]}`           |
+
+Background jobs (`apps/api/src/lib/jobs.ts`, handlers in `apps/api/src/jobs/`): `email.notification`, hourly `reminders.due-soon`, `reminders.overdue`, `reminders.milestones`, `invitations.expire`, daily `notifications.retention` (90 days) and `trash.purge` (30 days).
+
+## Live updates (Phase 6) — Socket.io at `/socket.io`, `apps/api/src/realtime/gateway.ts`
+
+The browser connects with its normal `nf_session` cookie (same address as the API; Vite forwards `/socket.io` in development). No valid session or an unverified email → `connect_error` "UNAUTHENTICATED"; more than 10 connections per person → "TOO_MANY_CONNECTIONS". After connecting the server sends `session:ready {userId}` and puts the socket in the `user:<id>` room.
+
+| Client → server                | Payload                                     | Notes                                                                                                   |
+| ------------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `room:join` / `room:leave`     | `{type: org\|workspace\|project\|task, id}` | join answers `{ok:true}` or `{ok:false, code:"FORBIDDEN"}`, with the same access checks as the HTTP API |
+| `presence:ping`                | `{workspaceId}`                             | every 30 s while a workspace is open (joining the workspace room also counts)                           |
+| `typing:start` / `typing:stop` | `{taskId}`                                  | relayed to the task room, at most once a second                                                         |
+
+| Server → client                                                                                                                                        | Room                  | Payload                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `task:created`, `task:updated`, `task:moved`, `task:deleted`, `task:restored`, `task:dependency_added`, `task:dependency_removed`, `task:bulk-updated` | project (+ task)      | `{orgId, workspaceId, projectId, actorId, occurredAt, data}`; `data.taskId`, `data.fields` (changed fields) |
+| `comment:created`, `comment:updated`, `comment:deleted`, `reaction:updated`                                                                            | project + task        | `data.taskId`, `data.comment` or `data.commentId`, `data.reactions`                                         |
+| `task:viewers`                                                                                                                                         | task                  | `{taskId, userIds}`                                                                                         |
+| `typing`                                                                                                                                               | task (not the sender) | `{taskId, userId, name, typing}`                                                                            |
+| `presence:update`                                                                                                                                      | workspace             | `{workspaceId, online: userIds}`; offline 60 s after the last ping or when the last tab closes              |
+| `access:revoked`                                                                                                                                       | the socket            | `{type, id}`: after a membership, role, team or visibility change the socket left that room                 |
+| `session:ended`                                                                                                                                        | the socket            | the login session was ended; the socket is disconnected                                                     |
+
 ## Known API issues
 
 1. Old organization slugs are stored in `slugHistory` but no redirect from old slugs exists yet.

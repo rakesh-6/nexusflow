@@ -16,7 +16,7 @@ import {
 } from "@nexusflow/shared";
 import { Router, type Request } from "express";
 import { z } from "zod";
-import { requireOrgPermission } from "../../middleware/tenant.ts";
+import { recheckAccessAfter, requireOrgPermission } from "../../middleware/tenant.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
 import { actorAndTenant, idParam, workspaceFor } from "../organizations/requestContext.ts";
@@ -57,6 +57,13 @@ import {
 // Projects, their members, columns and milestones, and workspace labels
 // (PRD §18.5). Mounted under /orgs/:orgSlug after loadTenant.
 export const projectsRouter = Router({ mergeParams: true });
+
+// Member, visibility, team and deletion changes alter who can see a project:
+// live connections re-check their rooms afterwards (task routes are not affected).
+projectsRouter.use("/projects/:projectId/members", recheckAccessAfter);
+projectsRouter.use("/projects/:projectId/undelete", recheckAccessAfter);
+projectsRouter.patch("/projects/:projectId", recheckAccessAfter);
+projectsRouter.delete("/projects/:projectId", recheckAccessAfter);
 
 /** The project in the address, with your access to it (404 without access). */
 async function projectFor(req: Request) {

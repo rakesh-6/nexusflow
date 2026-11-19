@@ -7,6 +7,7 @@ import { FullPageLoader, ServerUnavailable } from "../features/auth/guards";
 import { useCurrentUser } from "../features/auth/hooks";
 import { useOrgContext, useRememberWorkspace } from "../features/organizations/hooks";
 import { NoWorkspacePage } from "../features/organizations/NoWorkspacePage";
+import { useRealtimeSync } from "../features/realtime/useRealtime";
 import { useSidebarCollapsed } from "../hooks/useSidebarCollapsed";
 import { useWorkspace } from "../hooks/useWorkspace";
 import { ApiError } from "../lib/api";
@@ -33,6 +34,8 @@ export function AppShell() {
   const orgContext = useOrgContext(orgSlug);
   const context = useWorkspace();
   useRememberOpenedWorkspace(workspaceSlug ? context?.workspace.id : undefined);
+  // Live updates for the open organization and workspace (PRD §11.8).
+  useRealtimeSync(context);
   const { collapsed, toggle } = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();

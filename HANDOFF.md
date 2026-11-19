@@ -40,7 +40,8 @@ NexusFlow: multi-tenant SaaS project management and team collaboration (Linear/C
 
 - Phase 1 ✅ (commit `ff532f3`), Phase 2 ✅ (commit `64eb645`, CI green, 57 API tests).
 - Phase 3 ✅ (organizations and workspaces: backend, frontend, docs, PRD tracker), committed in the "Add Phase 3" commit. Full `pnpm test` passes (75 API + 18 shared tests; 18 of them Phase 3); 55 operations in `openapi.json`; 16 page renders pass.
-- Phase 4 ✅ (teams and projects: access rules, teams, projects, columns, milestones, labels, trash; API + web), committed in the "Add Phase 4" commit. Full `pnpm test` passes (85 API + 28 shared tests, ~15 minutes); 92 operations in `openapi.json`. Next: Phase 5.
+- Phase 4 ✅ (teams and projects: access rules, teams, projects, columns, milestones, labels, trash; API + web), commit `76afd75`, CI green.
+- **Phase 5 (tasks, board, list, calendar, My Tasks) is DONE but UNCOMMITTED**: 10 API tests and 14 unit tests for it pass; 109 operations in `openapi.json`; 7 page renders pass. Libraries approved by the developer: dnd-kit, fractional-indexing, Tiptap **3**, TanStack Table 8 + Virtual 3 (date-fns skipped, ⌘K palette moved to Phase 8; the PRD is updated). Waiting for the user to say "commit". Then Phase 6.
 
 ## 5. Completed functionality (verified in code and tests)
 
@@ -50,7 +51,7 @@ Phase 3: organizations, members, invitations, workspaces, plan limits and tenant
 
 ## 6. Current task and progress
 
-Phase 4 is finished and committed. Project access is decided in one place, `packages/shared/src/projects.ts#projectAccess` (PRD §12.4), used by the API (`apps/api/src/modules/projects/access.ts#loadProject`, 404 without access) and shown to the web through each project's `access` field. Project pages get the project from `useProjectOutlet()` (`apps/web/src/pages/ProjectLayout.tsx`). The web app gets everything from the API: `useWorkspace()` reads `GET /orgs/:org/context` (`sampleData.ts` is deleted). Web cache rules live in `apps/web/src/features/organizations/hooks.ts`: after a delete/leave, `refreshAfterRemoval` waits for fresh lists before navigating to `/`; a created/renamed workspace is written into the cached context at once (`cacheWorkspace`) so its new address never flashes "not found".
+Phase 5 is finished in code (uncommitted). Tasks: `apps/api/src/modules/tasks/` (every route loads the task's project through `loadProject`, so a task is visible exactly when its project is; every change sends the task's `version`, a stale one answers 409 `VERSION_CONFLICT` with the latest task; services call `recordTask` for the history and `emitEvent` (`apps/api/src/lib/events.ts`) for Phase 6, whose socket gateway only has to listen there). Web: `apps/web/src/features/tasks/`; a task opens in a panel (`?task=NEX-42`, mounted once in `ProjectLayout`) or on its own page. Project access is decided in one place, `packages/shared/src/projects.ts#projectAccess` (PRD §12.4), used by the API (`apps/api/src/modules/projects/access.ts#loadProject`, 404 without access) and shown to the web through each project's `access` field. Project pages get the project from `useProjectOutlet()` (`apps/web/src/pages/ProjectLayout.tsx`). The web app gets everything from the API: `useWorkspace()` reads `GET /orgs/:org/context` (`sampleData.ts` is deleted). Web cache rules live in `apps/web/src/features/organizations/hooks.ts`: after a delete/leave, `refreshAfterRemoval` waits for fresh lists before navigating to `/`; a created/renamed workspace is written into the cached context at once (`cacheWorkspace`) so its new address never flashes "not found".
 
 ## 7. Important files and directories
 
@@ -73,7 +74,8 @@ Phase 4 is finished and committed. Project access is decided in one place, `pack
 ## 8. Database and API status
 
 - DB: all 3 migrations applied to the current Neon dev branch; sample data seeded (Acme Studio, Globex; password `Acme-demo-2026`). The test branch is migrated automatically by `tests/globalSetup.ts`. No schema changes pending for Phase 3/4. See DATABASE.md.
-- API: Phase 1–3 endpoints documented in `openapi.json` (55 operations). See API.md.
+- DB: one migration for Phase 5 (`20261119090000_p5_task_position_order`: byte-order collation for `Task.position`), already applied to the dev branch; the test branch gets it from `tests/globalSetup.ts`.
+- API: Phase 1–5 endpoints documented in `openapi.json` (109 operations). See API.md.
 
 ## 9. Known bugs
 
@@ -85,8 +87,9 @@ See TODO.md: the deferred Phase 3 items, then Phases 4–12 per PRD §27 (MVP en
 
 ## 11. Exact next steps (in order)
 
-1. Get the user's approval for the Phase 5 libraries: dnd-kit (core 6.3, sortable 10, utilities 3), fractional-indexing 4 (API), Tiptap 3.34 (the PRD says Tiptap 2; update the PRD if 3 is used), TanStack Table 8.21 + Virtual 3.14. date-fns and cmdk are optional (own date helpers; ⌘K palette could move to Phase 8).
-2. Start Phase 5 (PRD §27: tasks, Kanban, List, Calendar, My Tasks). Ask before installing dnd-kit, Tiptap and TanStack Table. Tasks must use `loadProject` + `assertNotArchived` + `access.canContribute`; bump `Project.taskSequence` for numbering (it also locks the key). Add an outsider (404) test for every new endpoint (helpers in `apps/api/tests/helpers/orgs.ts`).
+1. Phase 6 is done: `apps/api/tests/comments.test.ts` and `realtime.test.ts` pass (10 tests). Two earlier runs hung once each, probably on a database connection that died while the laptop slept; `apps/api/src/lib/prisma.ts` now has a 30 s `query_timeout` and keep-alive, so such a hang now fails fast with an error instead.
+2. When the user says "commit": the full `pnpm test` must pass first (it takes ~25–30 minutes; keep the computer awake); stage, scan for secrets (`npg_`, connection strings, API keys), commit with the trailer, push, confirm CI.
+3. Phase 7 steps 7.1–7.3 are done (pg-boss jobs in `apps/api/src/lib/jobs.ts` + `apps/api/src/jobs/`, `notify()` in `apps/api/src/modules/notifications/notifications.service.ts`, Inbox and settings in `apps/web/src/features/notifications/`; 4 tests pass). Next: step 7.4 attachments (Cloudinary signed uploads like avatars in `apps/api/src/lib/storage/cloudinary.ts`; needs the developer's free Cloudinary keys for real uploads; enqueue a destroy job before `trash.purge` deletes rows with files).
 
 ## 12. How to avoid breaking existing functionality
 

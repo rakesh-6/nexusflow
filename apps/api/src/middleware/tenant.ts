@@ -1,6 +1,7 @@
 import { canInOrg, type OrgPermission } from "@nexusflow/shared";
 import type { NextFunction, Request, Response } from "express";
 import type { Organization, OrganizationMember, Subscription } from "../generated/prisma/client.ts";
+import { announceAccessChange } from "../lib/events.ts";
 import { prisma } from "../lib/prisma.ts";
 import { AppError } from "../utils/errors.ts";
 
@@ -18,18 +19,44 @@ export async function loadTenant(req: Request, _res: Response, next: NextFunctio
   }
 
   const slug = req.params["orgSlug"];
+  const tenant = await findTenant({ slug: typeof slug === "string" ? slug : "" }, user.id);
+  if (!tenant) throw notFound();
+  req.tenant = tenant;
+  next();
+}
+
+/**
+ * The organization (by slug or id) with this person's active membership, or
+ * null when they are not a member. Also used by the real-time gateway.
+ */
+export async function findTenant(
+  where: { slug: string } | { id: string },
+  userId: string,
+): Promise<Tenant | null> {
   const organization = await prisma.organization.findFirst({
-    where: { slug: typeof slug === "string" ? slug : "", deletedAt: null },
+    where: { ...where, deletedAt: null },
     include: {
-      members: { where: { userId: user.id, status: "ACTIVE" } },
+      members: { where: { userId, status: "ACTIVE" } },
       subscription: true,
     },
   });
   const membership = organization?.members[0];
-  if (!organization || !membership || !organization.subscription) throw notFound();
-
+  if (!organization || !membership || !organization.subscription) return null;
   const { members: _members, subscription, ...org } = organization;
-  req.tenant = { organization: org, membership, subscription };
+  return { organization: org, membership, subscription };
+}
+
+/**
+ * After a request that may change who can see what (members, roles, teams,
+ * visibility) succeeds, live connections of the organization re-check their
+ * rooms, so removed people stop receiving updates (PRD §11.8.2, AC-RT-04).
+ */
+export function recheckAccessAfter(req: Request, res: Response, next: NextFunction) {
+  res.on("finish", () => {
+    if (req.method !== "GET" && res.statusCode < 400 && req.tenant) {
+      announceAccessChange(req.tenant.organization.id);
+    }
+  });
   next();
 }
 

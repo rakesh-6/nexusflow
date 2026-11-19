@@ -31,3 +31,37 @@ export async function logActivity(input: {
     },
   });
 }
+
+/** One page of the history of a project, task, …, newest first, with the actors' names. */
+export async function listActivity(
+  organizationId: string,
+  entityType: string,
+  entityId: string,
+  cursor: string | undefined,
+  limit: number,
+) {
+  const rows = await prisma.activityLog.findMany({
+    where: { organizationId, entityType, entityId, category: "DOMAIN" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  const page = rows.slice(0, limit);
+  const actorIds = [...new Set(page.map((row) => row.actorId).filter((id): id is string => !!id))];
+  const actors = await prisma.user.findMany({
+    where: { id: { in: actorIds } },
+    select: { id: true, name: true },
+  });
+  const names = new Map(actors.map((actor) => [actor.id, actor.name]));
+  return {
+    items: page.map((row) => ({
+      id: row.id,
+      action: row.action,
+      actorName: row.actorId ? (names.get(row.actorId) ?? "Unknown") : "System",
+      changes: row.changes,
+      metadata: row.metadata,
+      createdAt: row.createdAt.toISOString(),
+    })),
+    nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
+  };
+}

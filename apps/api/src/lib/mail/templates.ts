@@ -101,3 +101,24 @@ export function passwordChangedMessage(input: { name: string }): EmailContent {
     html: html(lines),
   };
 }
+
+/** A notification by email (PRD §11.10.1, FR-NOTIF-02), with a link to change preferences. */
+export function notificationMessage(input: {
+  name: string;
+  title: string;
+  body: string | null;
+  link: string;
+  preferencesLink: string;
+}): EmailContent {
+  const lines = [
+    `Hi ${firstName(input.name)},`,
+    input.title,
+    ...(input.body ? [input.body] : []),
+    `You can choose which emails you get here: ${input.preferencesLink}`,
+  ];
+  return {
+    subject: input.title,
+    text: `${lines.join("\n\n")}\n\nOpen in ${APP_NAME}: ${input.link}\n`,
+    html: html(lines, { label: `Open in ${APP_NAME}`, url: input.link }),
+  };
+}

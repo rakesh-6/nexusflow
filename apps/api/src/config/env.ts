@@ -32,6 +32,9 @@ const envSchema = z
     // "auth" is the stricter limit for login, sign-up and password reset.
     RATE_LIMIT_GENERAL_PER_MINUTE: z.coerce.number().int().positive().default(300),
     RATE_LIMIT_AUTH_PER_MINUTE: z.coerce.number().int().positive().default(10),
+    // Background jobs (reminders, emails, clean-ups). Set to false to let the
+    // free Neon database sleep while you only browse the app locally.
+    JOBS_ENABLED: z.stringbool().default(true),
     // Where emails go: "console" prints them to the terminal, "memory" keeps them
     // in a list for automated tests, "brevo" really sends them (free plan).
     MAIL_PROVIDER: z.enum(["console", "memory", "brevo"]).optional(),

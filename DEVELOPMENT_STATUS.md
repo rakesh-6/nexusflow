@@ -1,6 +1,6 @@
 # NexusFlow — Development Status
 
-_Last updated: 2026-11-18. Source of truth for requirements: [PRD.md](PRD.md) (progress trackers in PRD §27)._
+_Last updated: 2026-11-19. Source of truth for requirements: [PRD.md](PRD.md) (progress trackers in PRD §27)._
 
 ## Project overview
 
@@ -10,15 +10,18 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 ## Current phase
 
-**Phase 4 — Teams and projects: DONE and committed (the "Add Phase 4" commit).** Next: Phase 5 (tasks and the Kanban board), once the user approves its libraries.
+**Phase 5 — Tasks, board, list, calendar, My Tasks: DONE (backend + frontend), NOT YET COMMITTED.** **Phase 6 — comments, reactions and live updates (Socket.io, presence, typing): DONE (API + web), NOT YET COMMITTED; its 10 API tests pass.** Next: the full test run, commit when the user says so, then Phase 7 (notifications and files).
 
-| Phase                                                | Status                               | Commit        |
-| ---------------------------------------------------- | ------------------------------------ | ------------- |
-| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                    | `ff532f3`     |
-| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green | `64eb645`     |
-| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                    | `15068dd`     |
-| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done (see PRD §27 tracker)        | "Add Phase 4" |
-| 5–12                                                 | ⬜ Not started                       | —             |
+| Phase                                                | Status                                     | Commit    |
+| ---------------------------------------------------- | ------------------------------------------ | --------- |
+| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                          | `ff532f3` |
+| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green       | `64eb645` |
+| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                          | `15068dd` |
+| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done, CI green                          | `76afd75` |
+| 5 Tasks and project views (steps 5.1–5.6)            | ✅ Done, uncommitted (see PRD §27 tracker) | —         |
+| 6 Comments and real-time (steps 6.1–6.4)             | ✅ Done, uncommitted (see PRD §27 tracker) | —         |
+| 7 Notifications and files (steps 7.1–7.4)            | 🟡 7.1–7.3 done, uncommitted; 7.4 next     | —         |
+| 8–12                                                 | ⬜ Not started                             | —         |
 
 ## Features completed (verified)
 
@@ -68,6 +71,33 @@ Deferred from Phase 3 (also in the PRD §27 tracker): logo upload and branding c
 | Web hooks, labels/badges, New project dialog                                            | `apps/web/src/features/projects/{hooks.ts,labels.tsx,NewProjectDialog.tsx}`                                    |
 | Pages: Projects, project settings, Teams, Team                                          | `apps/web/src/features/projects/pages/*`, `apps/web/src/pages/ProjectLayout.tsx` (header + `useProjectOutlet`) |
 | Settings sections: project details/members/columns/milestones, labels, trash, all teams | `apps/web/src/features/projects/settings/*`                                                                    |
+
+## Phase 5 (done) — where things are
+
+| Part                                                                                               | Files                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Task schemas, card positions, cycle check, date helpers, rich-text rules (14 unit tests)           | `packages/shared/src/{tasks,dates,richText}.ts`, `tasks.test.ts`                                                                        |
+| Task loading, cards, assignable people                                                             | `apps/api/src/modules/tasks/taskAccess.ts`                                                                                              |
+| Filters, sorting, paging; card order keys; shared checks (numbering, versions, history)            | `apps/api/src/modules/tasks/{taskQueries,taskPositions,taskRules}.ts`                                                                   |
+| Create, read, change, move, delete, restore, duplicate; lists, board, My Tasks; links and bulk     | `apps/api/src/modules/tasks/{tasks,taskLists,taskRelations}.service.ts`, `tasks.routes.ts`                                              |
+| Event hook for Phase 6, shared history reader                                                      | `apps/api/src/lib/events.ts`, `apps/api/src/lib/activity.ts#listActivity`                                                               |
+| API tests (10) and docs (17 new operations)                                                        | `apps/api/tests/tasks.test.ts`, `apps/api/src/docs/taskEndpoints.ts`                                                                    |
+| Web hooks (optimistic changes, conflicts), filter bar, pickers, New task dialog, small task pieces | `apps/web/src/features/tasks/{hooks.ts,useTaskFilters.ts,TaskFilterBar.tsx,pickers.tsx,NewTaskDialog.tsx,taskBits.tsx}`                 |
+| Board (dnd-kit), List (TanStack Table + Virtual), Calendar, My Tasks                               | `apps/web/src/features/tasks/{board/BoardPage,list/ListPage,calendar/CalendarPage}.tsx`, `pages/MyTasksPage.tsx`                        |
+| Task panel (`?task=NEX-42`) and page; description editor (Tiptap, lazy), links, history            | `apps/web/src/features/tasks/{TaskPanel,TaskPage}.tsx`, `detail/*`; the panel is mounted once in `apps/web/src/pages/ProjectLayout.tsx` |
+| Migration: byte-order sorting for card keys                                                        | `apps/api/prisma/migrations/20261119090000_p5_task_position_order`                                                                      |
+
+## Phase 6 (in progress) — where things are
+
+| Part                                                                             | Files                                                                                                                                     |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Comment schemas, reaction emoji, mention clean-up                                | `packages/shared/src/comments.ts`, `packages/shared/src/richText.ts#sanitizeMentions`                                                     |
+| Comments API (threads, placeholders, mentions, reactions, notification requests) | `apps/api/src/modules/comments/comments.{service,routes}.ts`, `apps/api/src/lib/notifications.ts`                                         |
+| API tests (AC-COMM-01…05, permissions, tenant isolation) and docs (6 operations) | `apps/api/tests/comments.test.ts`, `apps/api/src/docs/commentEndpoints.ts`                                                                |
+| Web: comments section, comment box with @ picker, JSON-to-React renderer         | `apps/web/src/features/tasks/detail/{CommentsSection,CommentEditor,CommentBody}.tsx`, hooks in `hooks.ts`                                 |
+| Live updates: gateway (rooms, events, presence, typing, access re-checks)        | `apps/api/src/realtime/gateway.ts` (started in `server.ts`), `recheckAccessAfter` in `middleware/tenant.ts`                               |
+| Live-update tests (AC-RT-01…05, rooms of other organizations)                    | `apps/api/tests/realtime.test.ts`                                                                                                         |
+| Web: connection, rooms, cache refresh, presence, typing                          | `apps/web/src/lib/realtime.ts`, `apps/web/src/features/realtime/useRealtime.ts` (used by AppShell, ProjectLayout, TaskDetailView, TopBar) |
 
 ## Known bugs and errors
 

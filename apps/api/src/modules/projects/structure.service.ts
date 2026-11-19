@@ -201,6 +201,8 @@ export async function deleteStatus(
       where: { statusId: status.id },
       data: {
         statusId: target.id,
+        // Someone editing one of these tasks must reload it first (PRD §11.6.7).
+        version: { increment: 1 },
         // Moving between done and not-done columns changes the completion date.
         ...(target.category === "DONE" && status.category !== "DONE"
           ? { completedAt: new Date() }

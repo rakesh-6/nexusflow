@@ -20,7 +20,9 @@ CI uses a throwaway `postgres:16` service instead (`.github/workflows/ci.yml`).
 | `20261113101449_p1_projects_and_tasks`           | Project, ProjectMember, TaskStatus, Label, Milestone, Task, TaskAssignee, TaskLabel, TaskDependency, TaskTemplate; one default status per project                                                                                                                                                                                                               |
 | `20261113124111_p1_collaboration_billing_search` | Comment, CommentReaction, Attachment, Notification, ActivityLog, Subscription, BillingProfile, Payment, Invoice, WebhookEvent, SalesLead, Automation, AutomationExecution, AiUsage; **hand-edited**: generated `searchVector` tsvector columns (Project, Task, Team, Comment) + GIN indexes, trigram indexes on Task.title / Project.name, 15 CHECK constraints |
 
-No schema changes were needed for Phase 2 or Phase 3.
+| `20261119090000_p5_task_position_order` | Phase 5: `Task.position` gets the "C" collation, so card order keys (fractional indexing: `Zz` < `a0` < `a0V`) sort byte by byte, with upper case before lower case. Prisma cannot describe a column collation, so it exists only in this migration; `prisma migrate diff` still prints an empty migration |
+
+No schema changes were needed for Phase 2, 3 or 4.
 
 ## Models (36) and relationships
 
@@ -54,4 +56,4 @@ When creating a migration that touches tables with hand-written SQL: use `--crea
 
 ## Pending database changes
 
-None required for Phase 3 or 4. Possible later: Postgres RLS (PRD §20, Phase 12), ActivityLog partitioning, `AiReport` table (Phase 11).
+None required for Phase 3, 4 or 5 beyond the migrations above. Possible later: Postgres RLS (PRD §20, Phase 12), ActivityLog partitioning, `AiReport` table (Phase 11).

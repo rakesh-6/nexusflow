@@ -13,6 +13,7 @@ import {
 import { NavLink } from "react-router";
 import { Button } from "../components/ui/button";
 import { Tooltip } from "../components/ui/tooltip";
+import { useUnreadCount } from "../features/notifications/hooks";
 import { useProjects } from "../features/projects/hooks";
 import { PROJECT_STATUS_DOTS } from "../features/projects/labels";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
@@ -116,6 +117,9 @@ interface SidebarContentProps {
 // Everything inside the sidebar. Used by the desktop sidebar and the phone drawer.
 export function SidebarContent({ context, collapsed, onToggleCollapse }: SidebarContentProps) {
   const { path, settingsPath } = context;
+  // Unread notifications of this organization (kept fresh by the live connection).
+  const { data: unread } = useUnreadCount();
+  const unreadHere = unread?.byOrg[context.organization.id] ?? 0;
 
   return (
     <div className="flex h-full flex-col gap-4 p-3">
@@ -124,7 +128,13 @@ export function SidebarContent({ context, collapsed, onToggleCollapse }: Sidebar
       <nav aria-label="Main" className="flex flex-col gap-0.5">
         <NavItem to={path("home")} icon={House} label="Home" collapsed={collapsed} />
         <NavItem to={path("my-tasks")} icon={ListTodo} label="My tasks" collapsed={collapsed} />
-        <NavItem to={path("inbox")} icon={Inbox} label="Inbox" collapsed={collapsed} />
+        <NavItem
+          to={path("inbox")}
+          icon={Inbox}
+          label="Inbox"
+          collapsed={collapsed}
+          badge={unreadHere}
+        />
         <NavItem to={path("projects")} icon={FolderKanban} label="Projects" collapsed={collapsed} />
         <NavItem to={path("teams")} icon={Users} label="Teams" collapsed={collapsed} />
         <NavItem to={path("insights")} icon={ChartColumn} label="Insights" collapsed={collapsed} />

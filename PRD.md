@@ -1,4 +1,5 @@
 
+
 # NexusFlow — Product Requirements Document (PRD)
 
 | Field | Value |
@@ -1427,12 +1428,12 @@ See §20 — URL tenant context, membership-gated middleware, Prisma tenant exte
 | Forms / validation | React Hook Form 7 + Zod 3 (shared schemas) | Same rules client and server |
 | Drag-and-drop | `@dnd-kit/core` + `@dnd-kit/sortable` | Keyboard and touch sensors, performant |
 | Tables / virtualization | TanStack Table 8 + TanStack Virtual 3 | List view |
-| Rich text | Tiptap 2 (StarterKit, Link, Mention, Placeholder) | JSON storage, mentions |
+| Rich text | Tiptap 3 (StarterKit, which includes Link, plus Placeholder; Mention arrives with comments in Phase 6) | JSON storage, mentions. Version 3 is current; the PRD said 2 (changed in Phase 5, approved by the developer) |
 | Charts | Recharts 2 | Dashboard charts |
-| Dates | `date-fns` 3 + `date-fns-tz` | Timezone-aware formatting |
-| Calendar | Custom month/week grid built on `date-fns` (no heavy dependency) | Fits design system; drag via dnd-kit |
+| Dates | Own small helpers in `packages/shared/src/dates.ts` plus the browser's `Intl` (instead of `date-fns`, decided in Phase 5) | Due dates are plain `YYYY-MM-DD` text, so adding days and comparing needs no library; only "today" depends on the person's time zone |
+| Calendar | Custom month/week grid built on the date helpers above (no heavy dependency) | Fits design system; drag via dnd-kit |
 | Gantt (Phase 5b) | Custom SVG/Canvas timeline (A-12 evaluates `gantt-task-react` as an alternative) | Dependency arrows, virtualization |
-| Command palette | `cmdk` | ⌘K |
+| Command palette | `cmdk` | ⌘K. Moved from Phase 5 to Phase 8, where global search is built; until then Ctrl+K opens the search page |
 | Toasts | `sonner` | |
 | Backend framework | Node.js 24 LTS, Express 5 | Node runs the API's TypeScript directly through built-in type stripping, so the API has no build step; Express 5 forwards errors from async handlers automatically |
 | ORM / DB | Prisma 7 ORM (`prisma-client` generator, `@prisma/adapter-pg` driver adapter, `prisma.config.ts`), PostgreSQL 16 | Migrations, typed client, raw SQL for analytics; the generated client is TypeScript that Node runs directly |
@@ -2433,15 +2434,58 @@ Deferred from Phase 4: project cover image upload (needs Cloudinary keys; same s
 - **Dependencies**: Phase 4.
 - **Acceptance criteria**: AC-TASK-01…08 and AC-VIEW-02, AC-VIEW-03, AC-VIEW-05 pass (AC-VIEW-01 real-time part deferred to Phase 6); concurrency test for numbering passes; board with 500 seeded tasks meets the "Load more" behavior; List view renders 5,000 rows virtualized with < 100 ms interaction latency; E2E: create tasks via quick add → drag across columns → inline edit in list → calendar drag; all task endpoints in the cross-tenant matrix pass.
 
+#### Phase 5 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 5.1 | Shared rules: task schemas (create, change with version, move, bulk ≤ 100, links, list filters and sorting), `fractional-indexing` card positions, dependency-cycle check, date helpers (today in the person's time zone, month grid, My Tasks groups), rich-text validation (node and link allow-list, size and depth limits) and plain-text extraction; migration `p5_task_position_order` gives `Task.position` byte-order sorting (collation "C") | `fractional-indexing` | ✅ Done |
+| 5.2 | Tasks API: create (numbers from one `UPDATE … RETURNING`, consecutive under 50 parallel requests), read by id and key, change with version check (409 `VERSION_CONFLICT` with the latest task) and one history row per request, move between columns and places (order keys renumbered when too long), delete/restore/trash (subtasks go with the parent), duplicate, subtasks one level deep, links with cycle detection, bulk change/delete in one transaction, filters, sorting and paging, board columns with the first 200 cards, My Tasks, assignable people; `emitEvent` hook for Phase 6 | none | ✅ Done |
+| 5.3 | Web: task hooks with optimistic updates and conflict handling, filter bar (search, My tasks, Overdue, Unassigned, priority, labels, assignees; kept in the address), New task dialog, shortcuts C and / | none | ✅ Done |
+| 5.4 | Web: Kanban board (mouse, touch and keyboard drag, quick add, collapse, "Load more" past 200 cards, undo on failed save) | `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` | ✅ Done |
+| 5.5 | Web: task panel and page (all properties, rich-text description, subtasks, links, history, duplicate, delete) | `@tiptap/react`, `@tiptap/pm`, `@tiptap/starter-kit`, `@tiptap/extensions` | ✅ Done |
+| 5.6 | Web: List view (sorting, inline editing, column choices per project, bulk bar, virtualized rows, keyboard use), Calendar view (month/week, drag to reschedule or unschedule, click a day to add, milestones, "No date" panel), My Tasks page | `@tanstack/react-table`, `@tanstack/react-virtual` | ✅ Done |
+
+Verification: 10 Phase 5 API tests (AC-TASK-01 to 08, AC-VIEW-02, AC-VIEW-03 through the same update path, AC-VIEW-05 paging with 205 tasks in one column, tenant isolation for every task endpoint) and 14 shared unit tests pass against the Neon test branch; 109 operations in `openapi.json`; 7 page renders (manager and read-only views of board, list, calendar, My Tasks and the task page) pass; the main bundle stays at 358 KB and the editor (397 KB) loads only when a task opens.
+
+Decisions: libraries approved by the developer on 2026-11-19 (dnd-kit, fractional-indexing, Tiptap **3**, TanStack Table 8 and Virtual 3); `date-fns` skipped (own helpers); `cmdk` and the ⌘K palette moved to Phase 8 (search arrives there); full-text search is Phase 8, so the task search box matches titles and task numbers.
+
+Deferred from Phase 5: the ⌘K command palette (Phase 8); the socket gateway and live updates (Phase 6; services already call `emitEvent`); a trash page for deleted tasks (the API exists); drag-and-drop column ordering (up/down buttons in project settings, as in Phase 4); group-by assignee or priority on the board (Post-MVP); measured performance runs (500-task board, 5,000-row list); the Playwright E2E journey; arrow-key and extra shortcuts beyond C, /, Enter and Space.
+
 ### Phase 6 — Comments and real-time collaboration (≈ 2 weeks)
 - **Deliverables**: Socket.io gateway (cookie auth, rooms, membership checks, revocation handling), `EventBus` wiring from services, full event contract (§18.9), presence and typing, client socket layer with cache patching and reconnect logic; comments (rich text, mentions with member picker, threads, edit/delete/tombstone, attachments hook), reactions; comment and task real-time updates across board/list/calendar/detail; notifications emitted for assignment/mention/comment are created in Phase 7 (service interface stubbed here).
 - **Dependencies**: Phase 5.
 - **Acceptance criteria**: AC-RT-01…05, AC-COMM-01…05, AC-VIEW-01, AC-VIEW-04 pass; socket cross-tenant tests pass; Playwright two-context scenario shows a move and a comment appearing on the other side within 500 ms; reconnection re-joins rooms (test kills the socket and asserts a subsequent event is received).
 
+#### Phase 6 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 6.1 | Comments API: threads one level deep (400 `MAX_DEPTH`), edit by the author (`editedAt`), delete by the author or a project manager (a "Comment deleted" placeholder while replies exist), @mentions kept only for people who can open the project (others become plain text), reactions that toggle (curated 24 plus any single emoji), notification requests (MENTIONED, TASK_COMMENTED; never the author) handed to the event bus for Phase 7, `comment:*` and `reaction:updated` events | none | ✅ Done |
+| 6.2 | Web: comments in the task panel and page (comment box with bold, italic, code, lists, links and an @ picker; replies, edit, delete, reactions with instant feedback); stored comments shown from their JSON without HTML | none (uses the Tiptap packages from Phase 5) | ✅ Done |
+| 6.3 | Socket.io gateway on the API's own port (session cookie, origin check, 10 connections per person, rooms with the same access checks as HTTP, membership/role/team/visibility changes make connections re-check their rooms and leave with `access:revoked`, signed-out sessions disconnected); web: one connection per tab, rooms joined by the shell, project layout and task panel, events refresh or patch the cached data, everything reloads after a reconnect | `socket.io` (API), `socket.io-client` (web; API tests) — approved 2026-11-19 | ✅ Done |
+| 6.4 | Presence (online avatars in the top bar, "also viewing" on a task) and "… is typing" under comments | none beyond 6.3 | ✅ Done |
+
+Verification: 5 comment API tests (AC-COMM-01 to 05, write rights, tenant isolation for every comment endpoint) and 5 live-update tests (AC-RT-01 to 05 with a real server and socket clients, plus rooms of other organizations refused) pass against the Neon test branch; 115 operations in `openapi.json`; 8 page renders (including comment threads, mentions, placeholders and reactions) pass. AC-VIEW-01 and AC-VIEW-04 (a second browser sees moves and reschedules) rely on these events; the two-browser Playwright check comes with the E2E suite.
+
+Decisions: mentions are inserted with the editor's @ button (a small custom node), so the Tiptap Mention and Suggestion extensions are not needed; typing "@" to open the list can come later. Access changes are detected by a small hook on the membership, team, role and visibility routes (`recheckAccessAfter` in `apps/api/src/middleware/tenant.ts`) instead of re-checking every room on a timer, which would keep the free Neon database awake. Database queries now give up after 30 s (`query_timeout`), so a connection that died quietly (Wi-Fi drop, laptop asleep) can no longer make a request wait forever.
+
+Deferred from Phase 6: the project-level "Discussions" tab (Post-MVP); opening the mention list by typing "@"; the Playwright two-browser test (Playwright arrives with the E2E suite); notifications themselves (Phase 7 turns `notification:requested` into inbox entries and emails).
+
 ### Phase 7 — Notifications and file management (≈ 2 weeks)
 - **Deliverables**: pg-boss queue bootstrap with schedules; notification service, types, preferences, Inbox UI, unread badge, live delivery, email notification templates and jobs, reminder jobs (due soon, overdue, milestone), notification retention job; attachment pipeline (sign/confirm/url/delete, allowlist, quotas, cleanup, destroy jobs), dropzone and previews (image lightbox, PDF, video), attachments on tasks and comments, storage usage in admin usage page; cover/avatar flows refactored onto the same pipeline if not already.
 - **Dependencies**: Phase 6 (sockets for live notifications, comments for mentions), Phase 2 (storage provider).
 - **Acceptance criteria**: AC-NOTIF-01…04, AC-FILE-01…05 pass; email jobs captured by the memory mail provider for enabled types only; reminder idempotency test passes; E2E: upload image → preview → delete; notification appears live and email is captured; cross-tenant tests for attachment URLs and notifications pass.
+
+#### Phase 7 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 7.1 | Background jobs: pg-boss queue in the same database (schema `pgboss`), workers polling every 30 s, hourly reminders, daily clean-ups; `JOBS_ENABLED=false` turns the timetable off (jobs sent by the app then run at once), so the free Neon database can sleep | `pg-boss` (approved 2026-11-19) | ✅ Done |
+| 7.2 | Notifications: one `notify()` for every service (actor removed, people who left the organization skipped, each person's preferences applied), inbox rows, live `notification:new` to the person's tabs, email jobs with a preferences link; sent for assignment, unassignment, column changes, comments, mentions, being added to a project; reminders TASK_DUE_SOON (tomorrow, after 9:00 local), TASK_OVERDUE, MILESTONE_DUE_SOON (3 days before, to managers), each exactly once; 90-day retention, 30-day trash purge, invitation expiry | none | ✅ Done |
+| 7.3 | Web: Inbox (All, Unread, Mentions, mark read/unread, mark all read, load more), unread badge in the sidebar and a dot on the bell, notification settings page (in-app and email per type) | none | ✅ Done |
+| 7.4 | Attachments (Cloudinary signed uploads, confirm, signed URLs, delete with destroy jobs, quotas, previews) | none (Cloudinary over HTTP, as for avatars) | ⬜ Next |
+
+Verification (7.1–7.3): 4 notification API tests (AC-NOTIF-01 assignment in the app, live and by email and none for the actor, preferences switching email and the app off; AC-NOTIF-02 24 reminder runs give one due-soon, plus overdue and milestone once each; AC-NOTIF-03/04 counts, read/unread, mark all read for one person only; retention, trash purge, invitation expiry) pass against the Neon test branch; 122 operations in `openapi.json`. The MEMBER_JOINED notice for the inviter already existed since Phase 3.
 
 ### Phase 8 — Dashboard and analytics (≈ 1.5 weeks) — MVP exit
 - **Deliverables**: analytics SQL (all metrics in §11.12.2), health heuristic, caching, date range and plan gating; workspace Insights page with tiles and Recharts charts, project overview tab, team analytics tab (basic), personal productivity; global search (tsvector/trgm indexes, grouped endpoint, ⌘K integration, results page), workspace-wide advanced filter page; pricing page (static from plan config); Home page (My Focus); empty states, skeletons and polish pass across MVP screens; accessibility pass (axe clean on core pages); MVP documentation (README, deployment guide draft).

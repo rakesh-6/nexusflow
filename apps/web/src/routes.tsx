@@ -1,23 +1,10 @@
-import {
-  Bell,
-  CalendarDays,
-  ChartColumn,
-  ChartGantt,
-  Inbox,
-  LayoutDashboard,
-  List,
-  ListTodo,
-  LockKeyhole,
-  Search,
-  SquareKanban,
-} from "lucide-react";
+import { ChartColumn, ChartGantt, LayoutDashboard, LockKeyhole, Search } from "lucide-react";
 import { lazy } from "react";
 import { Navigate, type RouteObject } from "react-router";
 import { GuestOnly, OrganizationRedirect, RequireAuth, RootRedirect } from "./features/auth/guards";
 import { AppShell } from "./layouts/AppShell";
 import { PublicLayout } from "./layouts/PublicLayout";
 import { crumb } from "./lib/routeHandle";
-import { TaskPage } from "./pages/DynamicPages";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PlaceholderPage, type PlaceholderPageProps } from "./pages/PlaceholderPage";
 import { ORG_SETTINGS_SECTIONS } from "./pages/settings/orgSettingsSections";
@@ -45,6 +32,15 @@ const ProjectsPage = lazy(() => import("./features/projects/pages/ProjectsPage")
 const ProjectSettingsPage = lazy(() => import("./features/projects/pages/ProjectSettingsPage"));
 const TeamsPage = lazy(() => import("./features/projects/pages/TeamsPage"));
 const TeamPage = lazy(() => import("./features/projects/pages/TeamPage"));
+const BoardPage = lazy(() => import("./features/tasks/board/BoardPage"));
+const ListPage = lazy(() => import("./features/tasks/list/ListPage"));
+const CalendarPage = lazy(() => import("./features/tasks/calendar/CalendarPage"));
+const TaskPage = lazy(() => import("./features/tasks/TaskPage"));
+const MyTasksPage = lazy(() => import("./features/tasks/pages/MyTasksPage"));
+const InboxPage = lazy(() => import("./features/notifications/InboxPage"));
+const NotificationSettingsPage = lazy(
+  () => import("./features/notifications/NotificationSettingsPage"),
+);
 
 /** A route that shows a placeholder page and its breadcrumb label. */
 function placeholder(path: string, page: PlaceholderPageProps, label = page.title): RouteObject {
@@ -141,13 +137,11 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="profile" replace /> },
           { path: "profile", element: <ProfileSettingsPage />, handle: crumb("Profile") },
-          placeholder("notifications", {
-            title: "Notifications",
-            description: "Choose which notifications you get in the app and by email.",
-            phase: "Phase 7",
-            comingSoon: "An in-app and an email switch for every notification type.",
-            icon: Bell,
-          }),
+          {
+            path: "notifications",
+            element: <NotificationSettingsPage />,
+            handle: crumb("Notifications"),
+          },
           { path: "security", element: <SecuritySettingsPage />, handle: crumb("Security") },
           { path: "org", element: <Navigate to="general" replace /> },
           {
@@ -173,20 +167,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="home" replace /> },
       { path: "home", element: <HomePage />, handle: crumb("Home") },
-      placeholder("my-tasks", {
-        title: "My tasks",
-        description: "Everything assigned to you, across all projects.",
-        phase: "Phase 5",
-        comingSoon: "Your tasks grouped into Overdue, Today, This week, Later and No date.",
-        icon: ListTodo,
-      }),
-      placeholder("inbox", {
-        title: "Inbox",
-        description: "Notifications about your tasks, mentions and invitations.",
-        phase: "Phase 7",
-        comingSoon: "Live notifications with All, Unread and Mentions tabs.",
-        icon: Inbox,
-      }),
+      { path: "my-tasks", element: <MyTasksPage />, handle: crumb("My tasks") },
+      { path: "inbox", element: <InboxPage />, handle: crumb("Inbox") },
       { path: "projects", element: <ProjectsPage />, handle: crumb("Projects") },
       {
         path: "projects/:projectKey",
@@ -194,28 +176,9 @@ export const routes: RouteObject[] = [
         handle: crumb((params) => params["projectKey"] ?? ""),
         children: [
           { index: true, element: <Navigate to="board" replace /> },
-          placeholder("board", {
-            title: "Board",
-            description: "Drag tasks between columns.",
-            phase: "Phase 5",
-            comingSoon:
-              "Kanban columns for each status, with priority, assignees and due dates on every card.",
-            icon: SquareKanban,
-          }),
-          placeholder("list", {
-            title: "List",
-            description: "All tasks in a sortable table.",
-            phase: "Phase 5",
-            comingSoon: "A table with inline editing, filters, sorting and bulk actions.",
-            icon: List,
-          }),
-          placeholder("calendar", {
-            title: "Calendar",
-            description: "Tasks and milestones by due date.",
-            phase: "Phase 5",
-            comingSoon: "Month and week views; drag a task to another day to reschedule it.",
-            icon: CalendarDays,
-          }),
+          { path: "board", element: <BoardPage />, handle: crumb("Board") },
+          { path: "list", element: <ListPage />, handle: crumb("List") },
+          { path: "calendar", element: <CalendarPage />, handle: crumb("Calendar") },
           placeholder("timeline", {
             title: "Timeline",
             description: "Tasks as bars over time, with dependencies.",

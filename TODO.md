@@ -4,12 +4,18 @@ _Order matters: finish each block before the next. Requirements: [PRD.md](PRD.md
 
 ## 1. Immediate next tasks
 
-1. **Try Phase 4 in the browser** (`pnpm dev`, http://localhost:5173, log in as `aarav@acme.example` / `Acme-demo-2026`): Projects page and filters; open a project → Settings (columns, milestones, members, archive/restore); Teams → a team → members; Workspace settings → Labels; Settings → Projects trash.
-2. **Start Phase 5** (tasks, Kanban board with dnd-kit, List, Calendar, My Tasks; PRD §27). Ask before installing dnd-kit, Tiptap and TanStack Table.
+1. **Try Phase 5 in the browser** (`pnpm dev`, http://localhost:5173, log in as `aarav@acme.example` / `Acme-demo-2026`): open a project → Board (drag a card to another column; press C for a new task; open a card), List (sort, edit a priority inline, select rows for the bulk bar, Columns menu), Calendar (drag a task to another day, click an empty day), My tasks, and a task page such as `/acme/general/tasks/NEX-1`.
+2. **Try Phase 6 in two browsers** (Aarav in one, Rohan in a private window): move a card, comment with the @ button, react, watch "is typing…", "also viewing" and the online avatars. Its 10 API tests pass.
+3. **Commit and push** when the user says "commit" (full test run and secret scan first), then confirm CI.
+4. **Phase 7.4 attachments** (Cloudinary; notifications 7.1–7.3 are done). Try the Inbox: assign Rohan a task as Aarav, then sign in as Rohan.
+
+## Deferred from Phase 5 (listed in the PRD §27 Phase 5 tracker)
+
+- ⌘K command palette (Phase 8), live updates through sockets (Phase 6; `emitEvent` is ready), a trash page for deleted tasks (API exists), drag-and-drop column order, group-by on the board (Post-MVP), measured performance runs (500-task board, 5,000-row list), Playwright E2E.
 
 ## Deferred from Phase 4 (listed in the PRD §27 Phase 4 tracker)
 
-- Project cover upload, project health (Phase 8), trash purge job (Phase 7), team activity/analytics tabs (Phase 8), rich-text descriptions (Phase 5 Tiptap), real-time `project:created` (Phase 6), drag-and-drop column order (Phase 5), Playwright E2E.
+- Project cover upload, project health (Phase 8), trash purge job (Phase 7), team activity/analytics tabs (Phase 8), real-time `project:created` (Phase 6), Playwright E2E.
 
 ## 2. Deferred from Phase 3 (listed in PRD §27 Phase 3 tracker)
 

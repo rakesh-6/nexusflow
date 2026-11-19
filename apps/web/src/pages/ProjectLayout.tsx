@@ -15,6 +15,8 @@ import { Alert } from "../components/ui/alert";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProjectByKey } from "../features/projects/hooks";
 import { ProgressBar, ProjectStatusBadge } from "../features/projects/labels";
+import { useRoom } from "../features/realtime/useRealtime";
+import { TaskPanel } from "../features/tasks/TaskPanel";
 import { useWorkspace, type WorkspaceContext } from "../hooks/useWorkspace";
 import { ApiError } from "../lib/api";
 import { cn } from "../lib/utils";
@@ -47,6 +49,8 @@ export default function ProjectLayout() {
     context?.workspace.slug ?? "",
     projectKey,
   );
+  // Other people's changes to this project's tasks arrive live.
+  useRoom("project", query.data?.id);
   if (!context) return <NotFoundPage />;
   if (query.isPending) {
     return (
@@ -116,6 +120,8 @@ export default function ProjectLayout() {
       <div className="flex-1">
         <Outlet context={{ project, context } satisfies ProjectOutletContext} />
       </div>
+      {/* A task opens here (?task=NEX-42) over the board, list or calendar. */}
+      <TaskPanel context={context} />
     </div>
   );
 }

@@ -7,11 +7,12 @@ import {
 } from "@nexusflow/shared";
 import type { Request } from "express";
 import { Prisma, type User, type Workspace } from "../../generated/prisma/client.ts";
-import { logActivity } from "../../lib/activity.ts";
+import { listActivity, logActivity } from "../../lib/activity.ts";
 import { assertWithinPlan } from "../../lib/planGuard.ts";
 import { prisma } from "../../lib/prisma.ts";
 import type { Tenant } from "../../middleware/tenant.ts";
 import { AppError } from "../../utils/errors.ts";
+import { notify } from "../notifications/notifications.service.ts";
 import { assertWorkspacePerson } from "../organizations/people.ts";
 import {
   accessFor,
@@ -498,6 +499,17 @@ export async function setProjectMember(
       role,
     },
   );
+  if (!existing) {
+    notify({
+      type: "PROJECT_ADDED",
+      orgId: tenant.organization.id,
+      workspaceId: project.workspaceId,
+      projectId: project.id,
+      actorId: actor.id,
+      recipientIds: [userId],
+      data: { projectId: project.id },
+    });
+  }
 }
 
 export async function removeProjectMember(
@@ -525,34 +537,9 @@ export async function removeProjectMember(
 // Activity (PRD §11.5)
 // ---------------------------------------------------------------------------
 
-export async function listProjectActivity(
+export const listProjectActivity = (
   organizationId: string,
   projectId: string,
   cursor: string | undefined,
   limit: number,
-) {
-  const rows = await prisma.activityLog.findMany({
-    where: { organizationId, entityType: "project", entityId: projectId, category: "DOMAIN" },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit + 1,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-  });
-  const page = rows.slice(0, limit);
-  const actorIds = [...new Set(page.map((row) => row.actorId).filter((id): id is string => !!id))];
-  const actors = await prisma.user.findMany({
-    where: { id: { in: actorIds } },
-    select: { id: true, name: true },
-  });
-  const names = new Map(actors.map((actor) => [actor.id, actor.name]));
-  return {
-    items: page.map((row) => ({
-      id: row.id,
-      action: row.action,
-      actorName: row.actorId ? (names.get(row.actorId) ?? "Unknown") : "System",
-      changes: row.changes,
-      metadata: row.metadata,
-      createdAt: row.createdAt.toISOString(),
-    })),
-    nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
-  };
-}
+) => listActivity(organizationId, "project", projectId, cursor, limit);

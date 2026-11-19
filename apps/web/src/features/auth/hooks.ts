@@ -7,6 +7,7 @@ import type {
 } from "@nexusflow/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiDelete, apiGet, apiPost } from "../../lib/api";
+import { closeRealtime } from "../../lib/realtime";
 
 // Everything the web app does with accounts, as React hooks. Each hook talks
 // to one API endpoint (see apps/api/openapi.json) and keeps the cached
@@ -56,6 +57,7 @@ export function useLogout(everywhere = false) {
     mutationFn: () => apiPost(everywhere ? "/api/v1/auth/logout-all" : "/api/v1/auth/logout"),
     // Forget every cached answer: the next person on this browser starts clean.
     onSettled: () => {
+      closeRealtime();
       queryClient.clear();
       queryClient.setQueryData(CURRENT_USER_KEY, null);
     },

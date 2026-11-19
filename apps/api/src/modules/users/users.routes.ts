@@ -1,4 +1,9 @@
-import { avatarConfirmSchema, avatarUploadSchema, updateProfileSchema } from "@nexusflow/shared";
+import {
+  avatarConfirmSchema,
+  avatarUploadSchema,
+  notificationPreferencesSchema,
+  updateProfileSchema,
+} from "@nexusflow/shared";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../lib/prisma.ts";
@@ -10,6 +15,10 @@ import {
 } from "../../middleware/auth.ts";
 import { AppError } from "../../utils/errors.ts";
 import { forgetCachedSessions } from "../auth/session.service.ts";
+import {
+  notificationPreferences,
+  saveNotificationPreferences,
+} from "../notifications/notifications.service.ts";
 import { listMyOrganizations } from "../organizations/organizations.service.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
@@ -25,6 +34,16 @@ import {
 
 // /api/v1/users/... : the signed-in person's own account (PRD §18.5).
 export const usersRouter = Router();
+
+// Which notifications you get in the app and by email (PRD §11.10.4).
+usersRouter.get("/me/notification-preferences", requireAuth, async (req, res) => {
+  sendSuccess(res, await notificationPreferences(currentAuth(req).user.id));
+});
+
+usersRouter.put("/me/notification-preferences", requireAuth, async (req, res) => {
+  const { body } = validateRequest(req, { body: notificationPreferencesSchema });
+  sendSuccess(res, await saveNotificationPreferences(currentAuth(req).user.id, body.preferences));
+});
 
 // Every organization you belong to, with its workspaces (the switcher, PRD §11.2.3).
 usersRouter.get("/me/organizations", requireVerified, async (req, res) => {

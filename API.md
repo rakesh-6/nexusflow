@@ -156,6 +156,26 @@ Your own notifications, across your organizations (only organizations you still 
 
 Background jobs (`apps/api/src/lib/jobs.ts`, handlers in `apps/api/src/jobs/`): `email.notification`, hourly `reminders.due-soon`, `reminders.overdue`, `reminders.milestones`, `invitations.expire`, daily `notifications.retention` (90 days) and `trash.purge` (30 days).
 
+## Attachments (Phase 7) — `apps/api/src/modules/attachments/`
+
+Files on tasks (and comments) are stored in Cloudinary as private ("authenticated") files; tests use an in-memory stand-in (`apps/api/src/lib/storage/files.ts`). Without Cloudinary keys the endpoints answer 503 `STORAGE_NOT_CONFIGURED`. Allowed: jpg jpeg png gif webp svg pdf txt md csv json docx xlsx pptx zip mp4 webm (extension and declared type must agree, and the type Cloudinary detects must match). At most 50 files per task; size and total storage follow the plan (FREE: 10 MB per file, 500 MB in all).
+
+| Method | Path (under `/orgs/:org`)    | Who                 | Notes                                                                                                                                                |
+| ------ | ---------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/attachments/sign`          | contributor         | `{taskId \| commentId, fileName, mimeType, sizeBytes}` → `{attachmentId, url, fields}`; 402 `PLAN_LIMIT_REACHED` (`maxFileBytes`, `maxStorageBytes`) |
+| POST   | `/attachments/:id/confirm`   | uploader            | checks size and type with Cloudinary; a mismatch destroys the file → 400 `UPLOAD_INVALID`                                                            |
+| GET    | `/attachments/:id/url`       | access              | `{url, expiresAt}`: works 15 minutes; plain files (and SVG) download, never open in the page                                                         |
+| DELETE | `/attachments/:id`           | uploader or manager | frees the storage and queues `storage.destroy`                                                                                                       |
+| GET    | `/tasks/:taskId/attachments` | access              | the task's files                                                                                                                                     |
+
+## Insights and search (Phase 8)
+
+| Method | Path (under `/orgs/:org`)   | Notes                                                                                                                                                                                                                                                 |
+| ------ | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/workspaces/:ws/analytics` | `?from&to&projectId` (default last 30 days, max 366; FREE: 30 days back → 402 `analyticsHistoryDays`); tiles, trend, byCategory, byPriority, projects (progress, health), workload, upcoming, activity, mine. Only projects you can open; cached 60 s |
+| GET    | `/search`                   | `?q&types=task,project,team,user,comment&workspaceId&limit(≤20)` → `{task:{items,total}, …}`; items `{id, title, subtitle, path}`; a key like `NEX-12` or `nex 12` comes first                                                                        |
+| GET    | `/workspaces/:ws/tasks`     | the task filters of a project's list, across every project you can open in the workspace                                                                                                                                                              |
+
 ## Live updates (Phase 6) — Socket.io at `/socket.io`, `apps/api/src/realtime/gateway.ts`
 
 The browser connects with its normal `nf_session` cookie (same address as the API; Vite forwards `/socket.io` in development). No valid session or an unverified email → `connect_error` "UNAUTHENTICATED"; more than 10 connections per person → "TOO_MANY_CONNECTIONS". After connecting the server sends `session:ready {userId}` and puts the socket in the `user:<id>` room.

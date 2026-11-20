@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useParams } from "react-router";
 import { PageSkeleton } from "../components/common/PageSkeleton";
 import { Sheet, SheetContent } from "../components/ui/sheet";
 import { TooltipProvider } from "../components/ui/tooltip";
@@ -13,6 +13,7 @@ import { useWorkspace } from "../hooks/useWorkspace";
 import { ApiError } from "../lib/api";
 import { cn } from "../lib/utils";
 import { NotFoundPage } from "../pages/NotFoundPage";
+import { CommandPalette } from "./CommandPalette";
 import { SidebarContent } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
@@ -39,23 +40,22 @@ export function AppShell() {
   const { collapsed, toggle } = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Close the phone drawer after moving to another page.
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
-  // Ctrl+K (⌘K on Mac) jumps to search from anywhere (PRD §14.6).
-  const searchPath = context?.path("search");
+  // Ctrl+K (⌘K on Mac) opens the command palette from anywhere (PRD §14.6).
+  const [paletteOpen, setPaletteOpen] = useState(false);
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (searchPath && event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
+      if (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
         event.preventDefault();
-        navigate(searchPath);
+        setPaletteOpen((open) => !open);
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [navigate, searchPath]);
+  }, []);
 
   if (orgContext.isPending) return <FullPageLoader />;
   if (orgContext.isError) {
@@ -102,7 +102,11 @@ export function AppShell() {
         </Sheet>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar context={context} onOpenMenu={() => setDrawerOpen(true)} />
+          <TopBar
+            context={context}
+            onOpenMenu={() => setDrawerOpen(true)}
+            onOpenPalette={() => setPaletteOpen(true)}
+          />
           <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto focus:outline-none">
             <Suspense fallback={<PageSkeleton />}>
               <Outlet />
@@ -110,6 +114,7 @@ export function AppShell() {
           </main>
         </div>
       </div>
+      <CommandPalette context={context} open={paletteOpen} onOpenChange={setPaletteOpen} />
     </TooltipProvider>
   );
 }

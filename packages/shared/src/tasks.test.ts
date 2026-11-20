@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { projectHealth } from "./analytics.ts";
 import { dueGroup, isOverdue, monthGrid, todayIn } from "./dates.ts";
 import { docToText, richTextDocSchema } from "./richText.ts";
 import {
@@ -116,6 +117,28 @@ describe("task schemas", () => {
   it("reads task keys", () => {
     expect(parseTaskKey("nex-42")).toEqual({ projectKey: "NEX", number: 42 });
     expect(parseTaskKey("NEX42")).toBeNull();
+  });
+});
+
+describe("project health (AC-DASH-05)", () => {
+  const base = { openTasks: 10, overdueTasks: 0, today: "2026-11-19" };
+  it("is off track past the end date while unfinished, or with many overdue tasks", () => {
+    expect(
+      projectHealth({ ...base, progress: 80, startDate: "2026-10-01", endDate: "2026-11-18" }),
+    ).toBe("OFF_TRACK");
+    expect(
+      projectHealth({ ...base, overdueTasks: 2, progress: 50, startDate: null, endDate: null }),
+    ).toBe("OFF_TRACK");
+  });
+
+  it("is at risk when slightly behind, on track when on schedule", () => {
+    // Half the time used, a third of the work done: 17 points behind.
+    const schedule = { startDate: "2026-11-01", endDate: "2026-12-07" };
+    expect(projectHealth({ ...base, ...schedule, progress: 33 })).toBe("AT_RISK");
+    expect(projectHealth({ ...base, ...schedule, progress: 60 })).toBe("ON_TRACK");
+    expect(projectHealth({ ...base, progress: 0, startDate: null, endDate: null })).toBe(
+      "NOT_SCHEDULED",
+    );
   });
 });
 

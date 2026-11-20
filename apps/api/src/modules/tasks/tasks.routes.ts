@@ -14,7 +14,7 @@ import { validateRequest } from "../../utils/validateRequest.ts";
 import { actorAndTenant, idParam, workspaceFor } from "../organizations/requestContext.ts";
 import { loadProject } from "../projects/access.ts";
 import { assignablePeople, loadTask } from "./taskAccess.ts";
-import { boardColumns, listTasks, myTasks } from "./taskLists.service.ts";
+import { boardColumns, listTasks, listWorkspaceTasks, myTasks } from "./taskLists.service.ts";
 import { addDependency, bulkChangeTasks, removeDependency } from "./taskRelations.service.ts";
 import {
   createTask,
@@ -88,6 +88,13 @@ tasksRouter.get("/workspaces/:workspaceSlug/tasks/by-key/:taskKey", async (req, 
   const { user, tenant, workspace } = await workspaceFor(req);
   const { task, loaded } = await loadTaskByKey(tenant, user, workspace.id, params.taskKey);
   sendSuccess(res, await taskDetail(user, task, loaded));
+});
+
+tasksRouter.get("/workspaces/:workspaceSlug/tasks", async (req, res) => {
+  const { query } = validateRequest(req, { query: taskQuerySchema });
+  const { user, tenant, workspace } = await workspaceFor(req);
+  const page = await listWorkspaceTasks(tenant, user, workspace, query);
+  sendSuccess(res, page.items, 200, { nextCursor: page.nextCursor });
 });
 
 tasksRouter.get("/workspaces/:workspaceSlug/my-tasks", async (req, res) => {

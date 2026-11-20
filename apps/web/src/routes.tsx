@@ -1,4 +1,4 @@
-import { ChartColumn, ChartGantt, LayoutDashboard, LockKeyhole, Search } from "lucide-react";
+import { ChartGantt } from "lucide-react";
 import { lazy } from "react";
 import { Navigate, type RouteObject } from "react-router";
 import { GuestOnly, OrganizationRedirect, RequireAuth, RootRedirect } from "./features/auth/guards";
@@ -41,28 +41,18 @@ const InboxPage = lazy(() => import("./features/notifications/InboxPage"));
 const NotificationSettingsPage = lazy(
   () => import("./features/notifications/NotificationSettingsPage"),
 );
+const InsightsPage = lazy(() => import("./features/insights/InsightsPage"));
+const ProjectOverviewPage = lazy(() =>
+  import("./features/insights/InsightsPage").then((module) => ({
+    default: module.ProjectOverviewPage,
+  })),
+);
+const SearchPage = lazy(() => import("./features/insights/SearchPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
 
 /** A route that shows a placeholder page and its breadcrumb label. */
 function placeholder(path: string, page: PlaceholderPageProps, label = page.title): RouteObject {
   return { path, element: <PlaceholderPage {...page} />, handle: crumb(label) };
-}
-
-/** A public page (no sidebar) that a later phase builds. */
-function publicPage(path: string, title: string, phase: string, comingSoon: string): RouteObject {
-  return {
-    path,
-    element: (
-      <div className="w-full max-w-md">
-        <PlaceholderPage
-          title={title}
-          description=""
-          phase={phase}
-          comingSoon={comingSoon}
-          icon={LockKeyhole}
-        />
-      </div>
-    ),
-  };
 }
 
 // Every address in the app (PRD §14.2). More specific paths win, so
@@ -105,12 +95,7 @@ export const routes: RouteObject[] = [
           </RequireAuth>
         ),
       },
-      publicPage(
-        "pricing",
-        "Pricing",
-        "Phase 8",
-        "Compare the Free, Pro, Business and Enterprise plans.",
-      ),
+      { path: "pricing", element: <PricingPage /> },
     ],
   },
 
@@ -186,13 +171,7 @@ export const routes: RouteObject[] = [
             comingSoon: "A Gantt chart with milestones and dependency arrows.",
             icon: ChartGantt,
           }),
-          placeholder("overview", {
-            title: "Overview",
-            description: "Progress, health and workload for this project.",
-            phase: "Phase 8",
-            comingSoon: "Completion, overdue tasks, workload per person and recent activity.",
-            icon: LayoutDashboard,
-          }),
+          { path: "overview", element: <ProjectOverviewPage />, handle: crumb("Overview") },
           { path: "settings", element: <ProjectSettingsPage />, handle: crumb("Settings") },
         ],
       },
@@ -207,21 +186,8 @@ export const routes: RouteObject[] = [
         element: <TeamPage />,
         handle: crumb((params) => params["teamSlug"] ?? ""),
       },
-      placeholder("insights", {
-        title: "Insights",
-        description: "Charts about projects, tasks and team workload.",
-        phase: "Phase 8",
-        comingSoon: "Completion trends, status and priority breakdowns, and team productivity.",
-        icon: ChartColumn,
-      }),
-      placeholder("search", {
-        title: "Search",
-        description: "Find projects, tasks, teams, people and comments.",
-        phase: "Phase 8",
-        comingSoon:
-          "Search across everything you can access, with filters. Ctrl+K opens it from anywhere.",
-        icon: Search,
-      }),
+      { path: "insights", element: <InsightsPage />, handle: crumb("Insights") },
+      { path: "search", element: <SearchPage />, handle: crumb("Search") },
       { path: "settings", element: <WorkspaceSettingsPage />, handle: crumb("Settings") },
       { path: "*", element: <NotFoundPage /> },
     ],

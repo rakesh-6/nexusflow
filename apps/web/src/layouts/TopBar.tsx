@@ -169,9 +169,12 @@ function NewMenu({ context }: { context: WorkspaceContext }) {
 export function TopBar({
   context,
   onOpenMenu,
+  onOpenPalette,
 }: {
   context: WorkspaceContext;
   onOpenMenu: () => void;
+  /** Opens the command palette (also Ctrl+K / ⌘K). */
+  onOpenPalette: () => void;
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b bg-card px-3 sm:px-4">
@@ -189,15 +192,19 @@ export function TopBar({
 
       <div className="ml-auto flex items-center gap-2">
         <OnlineNow context={context} />
-        <Button variant="outline" size="sm" asChild className="text-muted-foreground">
-          <Link to={context.path("search")}>
-            <Search />
-            <span className="hidden lg:inline">Search…</span>
-            <kbd className="hidden rounded border bg-surface px-1.5 text-[11px] font-medium lg:inline">
-              {isMac ? "⌘" : "Ctrl"} K
-            </kbd>
-            <span className="sr-only lg:hidden">Search</span>
-          </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={onOpenPalette}
+          aria-keyshortcuts={isMac ? "Meta+K" : "Control+K"}
+        >
+          <Search />
+          <span className="hidden lg:inline">Search…</span>
+          <kbd className="hidden rounded border bg-surface px-1.5 text-[11px] font-medium lg:inline">
+            {isMac ? "⌘" : "Ctrl"} K
+          </kbd>
+          <span className="sr-only lg:hidden">Search</span>
         </Button>
         <NewMenu context={context} />
         <BellButton context={context} />

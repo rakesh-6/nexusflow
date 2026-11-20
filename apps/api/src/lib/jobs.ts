@@ -18,6 +18,8 @@ export const JOB_NAMES = [
   "notifications.retention",
   "trash.purge",
   "invitations.expire",
+  "storage.destroy",
+  "attachments.cleanup",
 ] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 export type JobHandler = (data: Record<string, unknown>) => Promise<void>;
@@ -28,6 +30,7 @@ const SCHEDULES: Partial<Record<JobName, string>> = {
   "reminders.overdue": "10 * * * *",
   "reminders.milestones": "15 * * * *",
   "invitations.expire": "20 * * * *",
+  "attachments.cleanup": "25 * * * *",
   "notifications.retention": "30 3 * * *",
   "trash.purge": "40 3 * * *",
 };

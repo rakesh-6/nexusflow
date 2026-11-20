@@ -4,7 +4,13 @@ import { sendEmail } from "../lib/mail/index.ts";
 import { notificationMessage } from "../lib/mail/templates.ts";
 import { prisma } from "../lib/prisma.ts";
 import { settleNotifications } from "../modules/notifications/notifications.service.ts";
-import { emptyTrash, expireInvitations, removeOldNotifications } from "./cleanup.ts";
+import {
+  destroyStoredFile,
+  emptyTrash,
+  expireInvitations,
+  removeOldNotifications,
+  removeUnfinishedUploads,
+} from "./cleanup.ts";
 import { sendDueSoonReminders, sendMilestoneReminders, sendOverdueReminders } from "./reminders.ts";
 
 // What each background job does (the queue itself is in lib/jobs.ts).
@@ -49,4 +55,6 @@ export const JOB_HANDLERS: Record<JobName, JobHandler> = {
   "notifications.retention": async () => void (await removeOldNotifications()),
   "trash.purge": async () => void (await emptyTrash()),
   "invitations.expire": async () => void (await expireInvitations()),
+  "storage.destroy": destroyStoredFile,
+  "attachments.cleanup": async () => void (await removeUnfinishedUploads()),
 };

@@ -25,7 +25,8 @@ export const taskInclude = {
     select: {
       subtasks: { where: { deletedAt: null } },
       comments: { where: { deletedAt: null } },
-      attachments: { where: { deletedAt: null } },
+      // Only finished uploads count, not ones still on their way.
+      attachments: { where: { deletedAt: null, status: "READY" } },
       // Open blockers: blocking tasks that still exist and are not done.
       blockedBy: {
         where: { blockingTask: { deletedAt: null, status: { category: { not: "DONE" } } } },

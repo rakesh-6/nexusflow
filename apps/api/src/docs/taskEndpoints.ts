@@ -242,3 +242,87 @@ export const TASK_ENDPOINTS: Endpoint[] = [
     "200": ["Removed", ok(TaskDetail)],
   }),
 ];
+
+// Phase 8: dashboard numbers, search and the workspace-wide task filter.
+const Analytics = z.object({
+  range: z.object({
+    from: z.iso.date(),
+    to: z.iso.date(),
+    granularity: z.enum(["day", "week", "month"]),
+  }),
+  tiles: z.record(z.string(), z.number().int()),
+  trend: z.array(
+    z.object({ date: z.iso.date(), completed: z.number().int(), created: z.number().int() }),
+  ),
+  byCategory: z.array(z.object({ category: z.enum(STATUS_CATEGORIES), count: z.number().int() })),
+  byPriority: z.array(z.object({ priority: z.enum(PRIORITIES), count: z.number().int() })),
+  projects: z.array(
+    z
+      .object({
+        id: z.uuid(),
+        key: z.string(),
+        name: z.string(),
+        progress: z.number().int(),
+        health: z.string(),
+      })
+      .loose(),
+  ),
+  workload: z.array(z.object({ id: z.uuid(), name: z.string() }).loose()),
+  upcoming: z.array(
+    z.object({ id: z.uuid(), key: z.string(), title: z.string(), dueDate: z.iso.date() }).loose(),
+  ),
+  activity: z.array(z.object({ id: z.uuid(), action: z.string(), actorName: z.string() }).loose()),
+  mine: z.object({
+    completed: z.number().int(),
+    actualHours: z.number(),
+    onTimeRate: z.number().nullable(),
+    avgCycleDays: z.number().nullable(),
+  }),
+});
+const Hit = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  subtitle: z.string().nullable(),
+  path: z.string(),
+});
+const Group = z.object({ items: z.array(Hit), total: z.number().int() });
+
+export const INSIGHT_ENDPOINTS: Endpoint[] = [
+  {
+    method: "get",
+    path: "/orgs/{orgSlug}/workspaces/{workspaceSlug}/analytics",
+    tag: "Insights",
+    summary:
+      "Dashboard numbers for the projects you can open (?from&to&projectId); FREE looks back 30 days",
+    auth: true,
+    responses: {
+      "200": ["Numbers", ok(Analytics)],
+      "402": [
+        "The range goes back further than the plan allows (PLAN_LIMIT_REACHED, analyticsHistoryDays)",
+      ],
+    },
+  },
+  {
+    method: "get",
+    path: "/orgs/{orgSlug}/search",
+    tag: "Insights",
+    summary:
+      "Search tasks (also by key, e.g. NEX-42), projects, teams, people and comments you can open (?q&types&workspaceId&limit)",
+    auth: true,
+    responses: {
+      "200": [
+        "Results per kind",
+        ok(z.object({ task: Group, project: Group, team: Group, user: Group, comment: Group })),
+      ],
+    },
+  },
+  {
+    method: "get",
+    path: "/orgs/{orgSlug}/workspaces/{workspaceSlug}/tasks",
+    tag: "Tasks",
+    summary:
+      "The task filter across every project you can open in a workspace (same filters as a project's task list)",
+    auth: true,
+    responses: { "200": ["Tasks", okPage(z.array(Task), pageMeta)] },
+  },
+];

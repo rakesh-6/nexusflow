@@ -28,6 +28,7 @@ import {
 import { LabelPicker, PeoplePicker } from "../pickers";
 import { selectClass } from "../taskBits";
 import { useOpenTask } from "../TaskPanel";
+import { AttachmentsSection } from "./AttachmentsSection";
 import { CommentsSection } from "./CommentsSection";
 import { TaskActivity } from "./TaskActivity";
 import { DependencyList, SubtaskList } from "./TaskRelations";
@@ -437,6 +438,10 @@ function Detail({
             />
           </Section>
         )}
+
+        <Section title={`Files${task.attachmentCount ? ` · ${task.attachmentCount}` : ""}`}>
+          <AttachmentsSection orgSlug={orgSlug} task={task} />
+        </Section>
 
         <Section title="Links">
           <DependencyList orgSlug={orgSlug} task={task} canEdit={canEdit} onOpen={open} />

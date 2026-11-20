@@ -33,6 +33,40 @@ export async function listTasks(user: User, loaded: Loaded, query: TaskQuery) {
   };
 }
 
+/** The task filter across every project you can open in a workspace (PRD §11.13, AC-SRCH-04). */
+export async function listWorkspaceTasks(
+  tenant: Tenant,
+  user: User,
+  workspace: Workspace,
+  query: TaskQuery,
+) {
+  const orgRole = tenant.membership.role;
+  const projects = (
+    await prisma.project.findMany({
+      where: {
+        AND: [
+          accessibleProjectsWhere(tenant.organization.id, user.id, orgRole),
+          { workspaceId: workspace.id },
+        ],
+      },
+      include: projectInclude(user.id),
+    })
+  ).filter((project) => accessFor(project, orgRole));
+  const offset = decodeCursor(query.cursor);
+  const rows = await prisma.task.findMany({
+    where: taskWhere({ projectId: { in: projects.map((project) => project.id) } }, query, user),
+    include: taskInclude,
+    orderBy: taskOrderBy(query.sort ?? ["dueDate"]),
+    skip: offset,
+    take: query.limit + 1,
+  });
+  const page = rows.slice(0, query.limit);
+  return {
+    items: await toTaskSummaries(page),
+    nextCursor: rows.length > query.limit ? encodeCursor(offset + query.limit) : null,
+  };
+}
+
 /**
  * Every column with its first 200 cards and its total (PRD §11.7.1, AC-VIEW-05).
  * The board shows top-level tasks; subtasks appear inside their parent.

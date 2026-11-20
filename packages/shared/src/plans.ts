@@ -58,5 +58,16 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   },
 };
 
+/**
+ * Demo prices per organization per month in rupees (PRD A-1, D-1): Razorpay
+ * test mode only. A year costs 10 months. null: "talk to us".
+ */
+export const PLAN_PRICES: Record<PlanTier, number | null> = {
+  FREE: 0,
+  PRO: 999,
+  BUSINESS: 2999,
+  ENTERPRISE: null,
+};
+
 /** How many free organizations one person may own (abuse guard, PRD A-7). */
 export const MAX_OWNED_ORGANIZATIONS = 5;

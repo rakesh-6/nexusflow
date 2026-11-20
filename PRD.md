@@ -1429,7 +1429,7 @@ See §20 — URL tenant context, membership-gated middleware, Prisma tenant exte
 | Drag-and-drop | `@dnd-kit/core` + `@dnd-kit/sortable` | Keyboard and touch sensors, performant |
 | Tables / virtualization | TanStack Table 8 + TanStack Virtual 3 | List view |
 | Rich text | Tiptap 3 (StarterKit, which includes Link, plus Placeholder; Mention arrives with comments in Phase 6) | JSON storage, mentions. Version 3 is current; the PRD said 2 (changed in Phase 5, approved by the developer) |
-| Charts | Recharts 2 | Dashboard charts |
+| Charts | Simple bar and trend charts drawn with HTML and SVG (instead of Recharts, decided in Phase 8) | No library, a small download; Recharts can be added later if richer charts are wanted |
 | Dates | Own small helpers in `packages/shared/src/dates.ts` plus the browser's `Intl` (instead of `date-fns`, decided in Phase 5) | Due dates are plain `YYYY-MM-DD` text, so adding days and comparing needs no library; only "today" depends on the person's time zone |
 | Calendar | Custom month/week grid built on the date helpers above (no heavy dependency) | Fits design system; drag via dnd-kit |
 | Gantt (Phase 5b) | Custom SVG/Canvas timeline (A-12 evaluates `gantt-task-react` as an alternative) | Dependency arrows, virtualization |
@@ -2483,7 +2483,7 @@ Deferred from Phase 6: the project-level "Discussions" tab (Post-MVP); opening t
 | 7.1 | Background jobs: pg-boss queue in the same database (schema `pgboss`), workers polling every 30 s, hourly reminders, daily clean-ups; `JOBS_ENABLED=false` turns the timetable off (jobs sent by the app then run at once), so the free Neon database can sleep | `pg-boss` (approved 2026-11-19) | ✅ Done |
 | 7.2 | Notifications: one `notify()` for every service (actor removed, people who left the organization skipped, each person's preferences applied), inbox rows, live `notification:new` to the person's tabs, email jobs with a preferences link; sent for assignment, unassignment, column changes, comments, mentions, being added to a project; reminders TASK_DUE_SOON (tomorrow, after 9:00 local), TASK_OVERDUE, MILESTONE_DUE_SOON (3 days before, to managers), each exactly once; 90-day retention, 30-day trash purge, invitation expiry | none | ✅ Done |
 | 7.3 | Web: Inbox (All, Unread, Mentions, mark read/unread, mark all read, load more), unread badge in the sidebar and a dot on the bell, notification settings page (in-app and email per type) | none | ✅ Done |
-| 7.4 | Attachments (Cloudinary signed uploads, confirm, signed URLs, delete with destroy jobs, quotas, previews) | none (Cloudinary over HTTP, as for avatars) | ⬜ Next |
+| 7.4 | Attachments (Cloudinary signed uploads, confirm, signed URLs, delete with destroy jobs, quotas, previews) | none (Cloudinary over HTTP, as for avatars) | ✅ Done (real uploads need the developer's Cloudinary keys) |
 
 Verification (7.1–7.3): 4 notification API tests (AC-NOTIF-01 assignment in the app, live and by email and none for the actor, preferences switching email and the app off; AC-NOTIF-02 24 reminder runs give one due-soon, plus overdue and milestone once each; AC-NOTIF-03/04 counts, read/unread, mark all read for one person only; retention, trash purge, invitation expiry) pass against the Neon test branch; 122 operations in `openapi.json`. The MEMBER_JOINED notice for the inviter already existed since Phase 3.
 
@@ -2491,6 +2491,19 @@ Verification (7.1–7.3): 4 notification API tests (AC-NOTIF-01 assignment in th
 - **Deliverables**: analytics SQL (all metrics in §11.12.2), health heuristic, caching, date range and plan gating; workspace Insights page with tiles and Recharts charts, project overview tab, team analytics tab (basic), personal productivity; global search (tsvector/trgm indexes, grouped endpoint, ⌘K integration, results page), workspace-wide advanced filter page; pricing page (static from plan config); Home page (My Focus); empty states, skeletons and polish pass across MVP screens; accessibility pass (axe clean on core pages); MVP documentation (README, deployment guide draft).
 - **Dependencies**: Phases 5–7.
 - **Acceptance criteria**: AC-DASH-01…05, AC-SRCH-01, 02, 04 pass (AC-SRCH-03 load test in Phase 12); reconciliation test proves dashboard totals equal raw counts for the fixture; Lighthouse Performance ≥ 85 and Accessibility ≥ 95 on dashboard and board in CI (90 target enforced in Phase 12); all MVP E2E scenarios in §25.4 pass; MVP exit checklist in §28.1 complete.
+
+#### Phase 8 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 8.1 | Shared: project health (§11.12.3), date ranges and granularity, analytics and search schemas and types, demo prices `PLAN_PRICES` | none | ✅ Done |
+| 8.2 | Analytics API (`GET /workspaces/:ws/analytics?from&to&projectId`): tiles, completion and creation trend in the person's time zone, status and priority breakdowns, project progress and health, workload (utilization = estimated hours due in 7 days ÷ 40 h), upcoming deadlines, recent activity, personal productivity; only accessible projects; FREE limited to 30 days (402 `analyticsHistoryDays`); 60 s cache | none | ✅ Done |
+| 8.3 | Search API (`GET /search`): tasks by key ("NEX-12", "nex 12") then words (full-text plus prefix and title match), projects, teams, people, comments, all limited to accessible projects; workspace-wide task filter (`GET /workspaces/:ws/tasks`) | none | ✅ Done |
+| 8.4 | Web: Insights page and project Overview tab (tiles, trend, status and priority bars, project health table, workload, deadlines, activity, personal numbers), Search page, public Pricing page, Home "My focus" (due soon and mentions) | none | ✅ Done |
+| 8.5 | ⌘K command palette (pages, actions, projects, live search, recent items, keyboard use) built on the app's dialog instead of `cmdk`; README and deployment guide draft (`DEPLOYMENT.md`). Still open: automated accessibility checks (axe), Playwright MVP journeys and Lighthouse budgets, which need Playwright (moved to Phase 12 with the E2E suite) | none | 🟡 Palette and docs done; browser test tooling in Phase 12 |
+
+Verification: 2 API tests (AC-DASH-01…05 with a 3-project / 9-task fixture, AC-SRCH-01, 02, 04) and 2 project-health unit tests pass; 130 operations in `openapi.json`; 12 page renders (including Insights, Overview, Search and Pricing) pass.
+
 
 ### Phase 5b — Advanced views and task features (≈ 1 week, Post-MVP)
 - **Deliverables**: Timeline/Gantt view (bars, milestones, dependency arrows, drag/resize, zoom, virtualization); task templates (CRUD, create from template); recurring tasks (RRULE storage, scheduler job, next-occurrence creation on completion or schedule); project discussions tab; WIP badge on columns; group-by assignee/priority on the board; plan gating for these features.

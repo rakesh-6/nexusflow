@@ -2,6 +2,8 @@
 // permission rules and constants (see PRD.md §15.2).
 // Imports use ".ts" because Node runs the API's TypeScript files directly.
 
+export * from "./analytics.ts";
+export * from "./attachments.ts";
 export * from "./auth.ts";
 export * from "./comments.ts";
 export * from "./dates.ts";

@@ -12,16 +12,17 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 **Phase 5 — Tasks, board, list, calendar, My Tasks: DONE (backend + frontend), NOT YET COMMITTED.** **Phase 6 — comments, reactions and live updates (Socket.io, presence, typing): DONE (API + web), NOT YET COMMITTED; its 10 API tests pass.** Next: the full test run, commit when the user says so, then Phase 7 (notifications and files).
 
-| Phase                                                | Status                                     | Commit    |
-| ---------------------------------------------------- | ------------------------------------------ | --------- |
-| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                          | `ff532f3` |
-| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green       | `64eb645` |
-| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                          | `15068dd` |
-| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done, CI green                          | `76afd75` |
-| 5 Tasks and project views (steps 5.1–5.6)            | ✅ Done, uncommitted (see PRD §27 tracker) | —         |
-| 6 Comments and real-time (steps 6.1–6.4)             | ✅ Done, uncommitted (see PRD §27 tracker) | —         |
-| 7 Notifications and files (steps 7.1–7.4)            | 🟡 7.1–7.3 done, uncommitted; 7.4 next     | —         |
-| 8–12                                                 | ⬜ Not started                             | —         |
+| Phase                                                | Status                                         | Commit    |
+| ---------------------------------------------------- | ---------------------------------------------- | --------- |
+| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                              | `ff532f3` |
+| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green           | `64eb645` |
+| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                              | `15068dd` |
+| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done, CI green                              | `76afd75` |
+| 5 Tasks and project views (steps 5.1–5.6)            | ✅ Done, uncommitted (see PRD §27 tracker)     | —         |
+| 6 Comments and real-time (steps 6.1–6.4)             | ✅ Done, uncommitted (see PRD §27 tracker)     | —         |
+| 7 Notifications and files (steps 7.1–7.4)            | ✅ Done; 7.1–7.3 in `b24afeb`, 7.4 uncommitted | —         |
+| 8 Dashboard, search, pricing (steps 8.1–8.5)         | 🟡 8.1–8.4 done, uncommitted; 8.5 next         | —         |
+| 9–12                                                 | ⬜ Not started                                 | —         |
 
 ## Features completed (verified)
 

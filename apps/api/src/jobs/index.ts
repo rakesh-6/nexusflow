@@ -3,6 +3,11 @@ import type { JobHandler, JobName } from "../lib/jobs.ts";
 import { sendEmail } from "../lib/mail/index.ts";
 import { notificationMessage } from "../lib/mail/templates.ts";
 import { prisma } from "../lib/prisma.ts";
+import {
+  evaluateAutomations,
+  runDueSoonAutomations,
+  type EvaluateJob,
+} from "../modules/automations/automations.engine.ts";
 import { reconcileSubscriptions } from "../modules/billing/billing.service.ts";
 import { settleNotifications } from "../modules/notifications/notifications.service.ts";
 import {
@@ -60,4 +65,13 @@ export const JOB_HANDLERS: Record<JobName, JobHandler> = {
   "attachments.cleanup": async () => void (await removeUnfinishedUploads()),
   // Plans cancelled or downgraded at the period end switch over (AC-BILL-05).
   "billing.reconcile": async () => void (await reconcileSubscriptions()),
+  // Automation rules (PRD §11.15.2): one job per task or comment change, and an hourly due-soon check.
+  "automation.evaluate": async (data) => {
+    await evaluateAutomations(data as unknown as EvaluateJob);
+    await settleNotifications();
+  },
+  "automations.due-soon": async () => {
+    await runDueSoonAutomations();
+    await settleNotifications();
+  },
 };

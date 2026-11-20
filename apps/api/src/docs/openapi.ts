@@ -29,6 +29,7 @@ import path from "node:path";
 import { z } from "zod";
 import { cursorMeta, flag, FORBIDDEN, ok, okPage, type Endpoint } from "./helpers.ts";
 import { ATTACHMENT_ENDPOINTS } from "./attachmentEndpoints.ts";
+import { AUTOMATION_ENDPOINTS } from "./automationEndpoints.ts";
 import { BILLING_ENDPOINTS } from "./billingEndpoints.ts";
 import { COMMENT_ENDPOINTS } from "./commentEndpoints.ts";
 import { NOTIFICATION_ENDPOINTS } from "./notificationEndpoints.ts";
@@ -835,6 +836,7 @@ const ENDPOINTS: Endpoint[] = [
   ...NOTIFICATION_ENDPOINTS,
   ...ATTACHMENT_ENDPOINTS,
   ...BILLING_ENDPOINTS,
+  ...AUTOMATION_ENDPOINTS,
 
   // Phase 8: dashboard numbers, search, workspace-wide task filter
   ...INSIGHT_ENDPOINTS,

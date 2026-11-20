@@ -2,6 +2,7 @@ import { LockKeyhole } from "lucide-react";
 import type { ComponentType } from "react";
 import { useParams } from "react-router";
 import { EmptyState } from "../../components/common/EmptyState";
+import { AutomationsSettings } from "../../features/automations/AutomationsSettings";
 import { BillingSettings } from "../../features/billing/BillingSettings";
 import { AuditLogSettings } from "../../features/organizations/settings/AuditLogSettings";
 import { InvitationsSettings } from "../../features/organizations/settings/InvitationsSettings";
@@ -27,6 +28,7 @@ const ORG_SECTION_PAGES: Record<string, ComponentType<{ context: WorkspaceContex
   billing: BillingSettings,
   usage: UsageSettings,
   audit: AuditLogSettings,
+  automations: AutomationsSettings,
 };
 
 /** /:org/settings/org/members and the other admin panel sections (PRD §11.17.1). */

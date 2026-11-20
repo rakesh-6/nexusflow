@@ -191,6 +191,19 @@ Files on tasks (and comments) are stored in Cloudinary as private ("authenticate
 
 Without the `RAZORPAY_*` settings the page still loads (`configured: false`) and payment actions answer 503 `BILLING_NOT_CONFIGURED`.
 
+## Automations (Phase 10)
+
+| Method | Path (under `/orgs/:org`)     | Who                        | Notes                                                                                                                                           |
+| ------ | ----------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/automations/recipes`        | member                     | ready-made rules                                                                                                                                |
+| GET    | `/workspaces/:ws/automations` | member                     | workspace-wide rules and those of projects you can open (`?projectId`); each has `summary`, `canManage`                                         |
+| POST   | `/workspaces/:ws/automations` | project manager / ws admin | `{name, projectId \| null, trigger, conditions, actions}`; FREE → 402 `PLAN_FEATURE_REQUIRED`; over the plan's rules → 402 `PLAN_LIMIT_REACHED` |
+| PATCH  | `/automations/:id`            | manager                    | change any part; failures start again from 0                                                                                                    |
+| DELETE | `/automations/:id`            | manager                    | soft delete                                                                                                                                     |
+| POST   | `/automations/:id/toggle`     | manager                    | on/off                                                                                                                                          |
+| POST   | `/automations/:id/dry-run`    | manager                    | `{taskId}` → `{matches, conditions:[{text, passes}], actions:[…]}`; changes nothing                                                             |
+| GET    | `/automations/:id/executions` | manager                    | `?status&cursor&limit`; SUCCESS / FAILED / SKIPPED with the result lines                                                                        |
+
 ## Live updates (Phase 6) — Socket.io at `/socket.io`, `apps/api/src/realtime/gateway.ts`
 
 The browser connects with its normal `nf_session` cookie (same address as the API; Vite forwards `/socket.io` in development). No valid session or an unverified email → `connect_error` "UNAUTHENTICATED"; more than 10 connections per person → "TOO_MANY_CONNECTIONS". After connecting the server sends `session:ready {userId}` and puts the socket in the `user:<id>` room.

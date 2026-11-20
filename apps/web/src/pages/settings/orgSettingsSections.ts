@@ -57,7 +57,7 @@ export const ORG_SETTINGS_SECTIONS: Record<string, OrgSettingsSection> = {
     description: "Plan, invoices and payment status.",
     permission: "billing:manage",
     phase: "Phase 9",
-    comingSoon: "Upgrade, downgrade or cancel with Razorpay test mode, and see invoices.",
+    comingSoon: "",
   },
   usage: {
     title: "Usage",
@@ -75,10 +75,10 @@ export const ORG_SETTINGS_SECTIONS: Record<string, OrgSettingsSection> = {
   },
   automations: {
     title: "Automations",
+    // Every member: project managers manage their projects' rules (the API checks).
     description: "Rules that run automatically.",
-    permission: "members:manage",
     phase: "Phase 10",
-    comingSoon: "Create rules like “when a task is done, notify the project manager”.",
+    comingSoon: "",
   },
   ai: {
     title: "AI features",

@@ -14,6 +14,10 @@ export interface PlanLimits {
   maxStorageBytes: number | null;
   maxFileBytes: number;
   analyticsHistoryDays: number | null;
+  /** Automation rules per workspace (0: the plan has no automations). */
+  maxAutomationsPerWorkspace: number | null;
+  /** Automation runs per organization per calendar month. */
+  maxAutomationRunsPerMonth: number | null;
 }
 
 const MB = 1024 * 1024;
@@ -28,6 +32,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxStorageBytes: 500 * MB,
     maxFileBytes: 10 * MB,
     analyticsHistoryDays: 30,
+    maxAutomationsPerWorkspace: 0,
+    maxAutomationRunsPerMonth: 0,
   },
   PRO: {
     maxWorkspaces: 5,
@@ -37,6 +43,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxStorageBytes: 10 * GB,
     maxFileBytes: 25 * MB,
     analyticsHistoryDays: 365,
+    maxAutomationsPerWorkspace: 20,
+    maxAutomationRunsPerMonth: 5_000,
   },
   BUSINESS: {
     maxWorkspaces: 20,
@@ -46,6 +54,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxStorageBytes: 100 * GB,
     maxFileBytes: 100 * MB,
     analyticsHistoryDays: null,
+    maxAutomationsPerWorkspace: null,
+    maxAutomationRunsPerMonth: 50_000,
   },
   ENTERPRISE: {
     maxWorkspaces: null,
@@ -55,6 +65,8 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxStorageBytes: null,
     maxFileBytes: 100 * MB,
     analyticsHistoryDays: null,
+    maxAutomationsPerWorkspace: null,
+    maxAutomationRunsPerMonth: null,
   },
 };
 

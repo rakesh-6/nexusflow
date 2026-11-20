@@ -2534,6 +2534,25 @@ Verification: 6 API tests (AC-BILL-01…05, owner-only access, check payment sta
 - **Dependencies**: Phase 5 (events), Phase 7 (notifications/jobs), Phase 9 (plan features).
 - **Acceptance criteria**: AC-AUTO-01…04 pass; all five requested recipes verified by integration tests; a rule chain of depth 4 stops at 3 with SKIPPED executions; builder E2E creates a rule from a recipe, dry-runs it and sees a SUCCESS execution after triggering.
 
+#### Phase 10 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 10.1 | Shared rules (`packages/shared/src/automations.ts`): 8 triggers, 7 condition fields with 9 comparisons (AND), 9 actions, 6 recipes (the 5 requested plus "blocked → notify PM"), the summary sentence, the condition checker; plan limits `maxAutomationsPerWorkspace` (FREE 0, PRO 20, BUSINESS unlimited) and `maxAutomationRunsPerMonth` (0 / 5,000 / 50,000) | none | ✅ Done |
+| 10.2 | Engine (`apps/api/src/modules/automations/automations.engine.ts`, `automations.actions.ts`): task and comment events → `automation.evaluate` jobs; trigger and condition matching against the task as it is now; actions run as the automation (history rows without a person, naming the rule); loop guard (a rule never runs twice in one chain), chain depth ≤ 3, 1,000 runs per hour per organization (BUSINESS 10,000), monthly plan cap, 3 tries per action, switched off after 20 failures in a row with an `AUTOMATION_ALERT`; hourly `automations.due-soon` job reminds once per rule, task and due date | none | ✅ Done |
+| 10.3 | API (`/orgs/:org/workspaces/:ws/automations`, `/orgs/:org/automations/:id` PATCH/DELETE, `/toggle`, `/dry-run`, `/executions`, `/automations/recipes`): project rules for project managers, workspace-wide rules for workspace admins; FREE → 402 `PLAN_FEATURE_REQUIRED` | none | ✅ Done |
+| 10.4 | Web: Settings › Automations (rules with their sentence, on/off, delete, run log, dry run by task key) and the three-step builder (recipes, When, If, Then, live sentence) | none | ✅ Done |
+| 10.5 | Still open: builder E2E in the browser (Phase 12, needs Playwright), choosing an exact column (not only a category) in the builder, OR groups of conditions (after Phase 10) | none | ⬜ Later |
+
+Changes from the plan above (tell the developer before changing them back):
+- A run is logged only when the trigger and conditions match (or when the run is skipped by a guard), so the log is not flooded with "did not match" rows.
+- A failing action is tried 3 times inside the same job, not by re-sending the whole job, so other rules on the same event do not run twice.
+- `ADD_COMMENT` comments are written in the name of the rule's creator, with "(Automation: name)" at the end, because every comment needs an author.
+- FREE organizations keep their rules (for example after a downgrade), but the engine does not run them.
+- There is no separate `GET /automations/:id`; the workspace list returns every rule with its details.
+
+Verification: 5 API tests (AC-AUTO-01…04, the self-triggering rule, a chain of 4 rules stopping at 3) and 6 unit tests pass; 4 page renders (list, empty, Free, builder) pass.
+
 ### Phase 11 — AI integration (≈ 1.5 weeks, Post-MVP)
 - **Deliverables**: `AiProvider` interface and adapters (Gemini, OpenAI, Anthropic) with factory and circuit breaker; guard (plan, org setting, rate limit, quota); prompt templates and Zod output schemas for the eight features; endpoints; UI entry points with preview/accept flows; weekly report job and email; AI usage page for admins; org setting toggle; privacy notice copy.
 - **Dependencies**: Phase 5 (tasks), Phase 8 (analytics for insights/reports), Phase 9 (plan gating), Phase 7 (jobs/email).

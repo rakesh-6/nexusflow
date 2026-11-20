@@ -10,7 +10,7 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 ## Current phase
 
-**Phases 1–8 (the MVP) are committed and CI is green (`261f016`). Phase 9 — billing in Razorpay test mode: DONE, NOT YET COMMITTED; its 6 API tests pass.** Next: commit when the user says so, try a real test-mode payment with the developer's Razorpay test keys, then Phase 10 (automations).
+**Phases 1–9 are committed and CI is green (Phase 9: `8ed87c8`). Phase 10 — automations: DONE, NOT YET COMMITTED; its 5 API tests and 6 unit tests pass.** Next: commit when the user says so, then Phase 11 (AI with Gemini, free tier).
 
 | Phase                                                | Status                                   | Commit    |
 | ---------------------------------------------------- | ---------------------------------------- | --------- |
@@ -114,7 +114,7 @@ No open code bugs. (Fixed on 2026-11-18: DELETE workspace without a body now def
 
 ## Test status
 
-Latest full API run (2026-11-20, 2,385 s, PC kept awake): 17 files, 114 tests pass; shared 44 pass. Phase 9: `tests/billing.test.ts` 6 pass; 3 billing page renders pass.
+Latest full API run (2026-11-20, 2,319 s, PC kept awake): 18 files, 120 tests pass; shared 44 pass (now 50 with automations). Phase 10: `tests/automations.test.ts` 5 pass; 4 automation page renders pass.
 
 | Suite                                            | Result                                                         |
 | ------------------------------------------------ | -------------------------------------------------------------- |

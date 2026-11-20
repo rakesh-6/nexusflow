@@ -2066,7 +2066,7 @@ export const forTenant = (orgId: string) => prisma.$extends({
 | SEC-15 | Transport security | HTTPS only (HSTS `max-age=31536000`), free TLS termination at Render, `Secure` cookies |
 | SEC-16 | Headers | `helmet`: `X-Content-Type-Options`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY` (web app: `frame-ancestors 'none'`), `Permissions-Policy` minimal |
 | SEC-17 | Dependency and supply chain | `pnpm audit` and Dependabot weekly; lockfile committed; CI fails on high/critical vulnerabilities with no fix available only after triage note |
-| SEC-18 | Secrets in client | Only publishable values (`VITE_RAZORPAY_KEY_ID`, Cloudinary cloud name) reach the browser; Cloudinary API secret and Razorpay key secret stay server side |
+| SEC-18 | Secrets in client | Only publishable values (the Razorpay key id, sent in the checkout answer; the Cloudinary cloud name) reach the browser; Cloudinary API secret and Razorpay key secret stay server side |
 | SEC-19 | Session hygiene | Sessions revoked on password change/reset, role downgrade to GUEST (forces context reload), account deletion; `lastSeenAt` for user review |
 | SEC-20 | Error handling | No stack traces or SQL in responses; generic 500 with request id; detailed logs server side |
 | SEC-21 | Privacy | PII minimization; account deletion scrub; data processing notes in A-18; IP addresses truncated in logs after 30 days (job) |
@@ -2515,6 +2515,20 @@ Verification: 2 API tests (AC-DASH-01…05 with a 3-project / 9-task fixture, AC
 - **Dependencies**: Phase 3 (plans, guard), Phase 7 (email, jobs), Phase 8 (pricing page).
 - **Acceptance criteria**: AC-BILL-01…05 pass with synthetic signed webhooks; Razorpay test-mode E2E completes checkout and activation; replayed webhooks are ignored; downgrade guard and cycle-end scheduling verified with the reconciliation job in test clock mode; billing endpoints OWNER-only in the permission tests; threat-model review of billing completed and documented.
 
+#### Phase 9 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 9.1 | Razorpay `PaymentProvider` over its REST API (`apps/api/src/lib/payments/razorpay.ts`: customers, subscriptions, change plan, cancel, fetch; HMAC-SHA256 checks for Checkout and webhooks in constant time) and an in-memory stand-in for tests; test keys only (`RAZORPAY_KEY_ID` must start with `rzp_test_`) | none (no Razorpay SDK) | ✅ Done |
+| 9.2 | Billing API under `/orgs/:org/billing` (owner only): overview, checkout, checkout verify (never changes the plan, AC-BILL-03), change plan with downgrade guard (409 `DOWNGRADE_BLOCKED` listing each limit), cancel at period end, billing profile with GSTIN, and "Check payment status" (`POST /billing/subscription/refresh`, PRD R-05) that asks Razorpay and applies its answer, needed on localhost where webhooks cannot arrive | none | ✅ Done |
+| 9.3 | Webhook `POST /api/v1/billing/webhooks/razorpay`: raw body, mounted before CSRF and the JSON reader; signature check; `WebhookEvent` stored once per event id (replays answered `duplicate: true`); subscription state machine, payments and invoices sync; BILLING audit entries; `billing:updated` live event and BILLING_EVENT notifications; daily `billing.reconcile` job (03:50 UTC) moves ended plans to Free and applies scheduled downgrades | none | ✅ Done |
+| 9.4 | Web: Settings › Billing (plan and status, monthly/yearly, upgrade with Razorpay Checkout loaded from `checkout.razorpay.com` only when paying, switch, downgrade, cancel, check status, invoices, payments, billing address); CSP allows Razorpay's script and payment window; Usage and Pricing pages link to it | none | ✅ Done |
+| 9.5 | Still open: resume after cancel, read-only mode for data over the Free limits, emailed receipts, the Enterprise sales lead form, browser E2E with Razorpay test mode (Phase 12, needs Playwright), and the written billing threat-model review | none | ⬜ Later |
+
+Change from the plan above: the browser gets the Razorpay key id from the checkout answer, so `VITE_RAZORPAY_KEY_ID` is not needed.
+
+Verification: 6 API tests (AC-BILL-01…05, owner-only access, check payment status) pass with signed test webhooks; 3 page renders of Settings › Billing (Free, Pro, not set up) pass.
+
 ### Phase 10 — Automation engine (≈ 2 weeks, Post-MVP)
 - **Deliverables**: automation schema and Zod definitions for triggers/conditions/actions; event-to-job bridge; evaluator and action executors (system actor), loop protection, rate limits, retries, auto-disable; execution log; recipes catalogue; builder UI (three-step, summary sentence, dry run, execution log); plan gating and monthly run counters; `AUTOMATION_ALERT` notifications.
 - **Dependencies**: Phase 5 (events), Phase 7 (notifications/jobs), Phase 9 (plan features).
@@ -2788,7 +2802,7 @@ All variables are validated at startup (`apps/api/src/config/env.ts`, `apps/web/
 |---|---|
 | `VITE_API_URL` | `/api/v1` (same origin in development via the proxy and in production) |
 | `VITE_SOCKET_URL` | Empty (same origin) |
-| `VITE_RAZORPAY_KEY_ID` | Publishable key (Phase 9) |
+| ~~`VITE_RAZORPAY_KEY_ID`~~ | Not needed: the API sends the key id with each checkout (Phase 9) |
 | `VITE_CLOUDINARY_CLOUD_NAME` | For building upload URLs |
 | `VITE_SENTRY_DSN` | Optional |
 | `VITE_APP_ENV` | `development` · `staging` · `production` |

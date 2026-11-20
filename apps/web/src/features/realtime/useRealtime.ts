@@ -96,6 +96,11 @@ export function useRealtimeSync(context: WorkspaceContext | null) {
     const onAny = (name: string, event: LiveEvent | undefined) => {
       if (!event || typeof event !== "object") return;
       const taskId = typeof event.data?.["taskId"] === "string" ? event.data["taskId"] : null;
+      if (name === "billing:updated") {
+        // Razorpay confirmed a payment or a plan change: new plan, new limits.
+        refresh(["org", orgSlug]);
+        return;
+      }
       if (name === "notification:new") {
         // A new notification for you: refresh the badge and the inbox.
         refresh(["notifications"]);

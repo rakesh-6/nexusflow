@@ -10,19 +10,20 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 ## Current phase
 
-**Phase 5 — Tasks, board, list, calendar, My Tasks: DONE (backend + frontend), NOT YET COMMITTED.** **Phase 6 — comments, reactions and live updates (Socket.io, presence, typing): DONE (API + web), NOT YET COMMITTED; its 10 API tests pass.** Next: the full test run, commit when the user says so, then Phase 7 (notifications and files).
+**Phases 1–8 (the MVP) are committed and CI is green (`261f016`). Phase 9 — billing in Razorpay test mode: DONE, NOT YET COMMITTED; its 6 API tests pass.** Next: commit when the user says so, try a real test-mode payment with the developer's Razorpay test keys, then Phase 10 (automations).
 
-| Phase                                                | Status                                         | Commit    |
-| ---------------------------------------------------- | ---------------------------------------------- | --------- |
-| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                              | `ff532f3` |
-| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green           | `64eb645` |
-| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                              | `15068dd` |
-| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done, CI green                              | `76afd75` |
-| 5 Tasks and project views (steps 5.1–5.6)            | ✅ Done, uncommitted (see PRD §27 tracker)     | —         |
-| 6 Comments and real-time (steps 6.1–6.4)             | ✅ Done, uncommitted (see PRD §27 tracker)     | —         |
-| 7 Notifications and files (steps 7.1–7.4)            | ✅ Done; 7.1–7.3 in `b24afeb`, 7.4 uncommitted | —         |
-| 8 Dashboard, search, pricing (steps 8.1–8.5)         | 🟡 8.1–8.4 done, uncommitted; 8.5 next         | —         |
-| 9–12                                                 | ⬜ Not started                                 | —         |
+| Phase                                                | Status                                   | Commit    |
+| ---------------------------------------------------- | ---------------------------------------- | --------- |
+| 1 Setup and architecture (8 steps)                   | ✅ Done, CI green                        | `ff532f3` |
+| 2 Authentication and user management (steps 2.1–2.6) | ✅ Done, 57 API tests pass, CI green     | `64eb645` |
+| 3 Organizations and workspaces (steps 3.1–3.7)       | ✅ Done, CI green                        | `15068dd` |
+| 4 Teams and projects (steps 4.1–4.5)                 | ✅ Done, CI green                        | `76afd75` |
+| 5 Tasks and project views (steps 5.1–5.6)            | ✅ Done, CI green                        | `b24afeb` |
+| 6 Comments and real-time (steps 6.1–6.4)             | ✅ Done, CI green                        | `b24afeb` |
+| 7 Notifications and files (steps 7.1–7.4)            | ✅ Done, CI green                        | `261f016` |
+| 8 Dashboard, search, pricing (steps 8.1–8.5)         | ✅ Done (browser test tools in Phase 12) | `261f016` |
+| 9 Billing, Razorpay test mode (steps 9.1–9.5)        | ✅ 9.1–9.4 done, uncommitted; 9.5 later  | —         |
+| 10–12                                                | ⬜ Not started                           | —         |
 
 ## Features completed (verified)
 
@@ -106,11 +107,14 @@ No open code bugs. (Fixed on 2026-11-18: DELETE workspace without a body now def
 
 1. **Environment notes (not code bugs):**
    - The pg driver prints a `SECURITY WARNING` about `sslmode=require`; harmless. Using `sslmode=verify-full` in `.env` removes it.
-   - The developer has several times pasted real Neon connection strings into `.env.example`; it must only contain placeholders (it does now).
+   - The developer has several times pasted real secrets (Neon connection strings, Razorpay test keys) into `.env.example`; it must only contain placeholders (it does now). Check `git diff .env.example` before every commit.
+   - Razorpay webhooks cannot reach localhost. Locally, "Check payment status" on Settings › Billing asks Razorpay instead; on the deployed site, add the webhook in the Razorpay dashboard.
    - Prisma's migration engine reports a wrong password as `P1001 Can't reach database server`; the real error is `28P01 password authentication failed`.
    - If a test run is interrupted mid-migration, `tests/globalSetup.ts` now rebuilds the test database automatically (handles Prisma `P3009`).
 
 ## Test status
+
+Latest full API run (2026-11-20, 2,385 s, PC kept awake): 17 files, 114 tests pass; shared 44 pass. Phase 9: `tests/billing.test.ts` 6 pass; 3 billing page renders pass.
 
 | Suite                                            | Result                                                         |
 | ------------------------------------------------ | -------------------------------------------------------------- |

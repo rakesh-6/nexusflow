@@ -8,6 +8,7 @@ import { csrfProtection } from "./middleware/csrf.ts";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.ts";
 import { generalLimiter } from "./middleware/rateLimit.ts";
 import { requestLogger } from "./middleware/requestLogger.ts";
+import { billingWebhookRouter } from "./modules/billing/billing.routes.ts";
 import { webAppRouter } from "./middleware/webApp.ts";
 import { apiRouter } from "./routes.ts";
 
@@ -32,7 +33,15 @@ export function createApp() {
             "https://*.googleusercontent.com",
           ],
           // The browser uploads photos straight to Cloudinary (PRD §11.11).
-          connectSrc: ["'self'", "https://api.cloudinary.com"],
+          connectSrc: [
+            "'self'",
+            "https://api.cloudinary.com",
+            "https://api.razorpay.com",
+            "https://lumberjack.razorpay.com",
+          ],
+          // Razorpay Checkout: its script, and the payment window it opens (PRD §11.14.3).
+          scriptSrc: ["'self'", "https://checkout.razorpay.com"],
+          frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
           // Upgrading http to https only makes sense on the real https site;
           // on http://localhost it would break loading the app's own files.
           upgradeInsecureRequests: env.NODE_ENV === "production" ? [] : null,
@@ -44,6 +53,9 @@ export function createApp() {
   // Count API requests before reading their bodies, so a visitor over the
   // limit is turned away cheaply.
   app.use("/api/v1", generalLimiter);
+  // Razorpay's webhook comes from Razorpay's servers, not a browser, and its
+  // signature covers the exact bytes sent, so it skips CSRF and the JSON reader.
+  app.use("/api/v1/billing/webhooks", billingWebhookRouter);
   // Block cross-site forgeries before doing any work (PRD §19.3).
   app.use("/api/v1", csrfProtection);
   app.use(express.json({ limit: "1mb" }));

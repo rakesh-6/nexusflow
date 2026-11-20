@@ -51,6 +51,17 @@ const envSchema = z
     // "Continue with Google" (PRD §19.4). Leave empty to hide the button.
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // Razorpay in TEST MODE (PRD §11.14). Leave empty and upgrading stays off.
+    RAZORPAY_KEY_ID: z
+      .string()
+      .startsWith("rzp_test_", "Use a Razorpay TEST key (rzp_test_...)")
+      .optional(),
+    RAZORPAY_KEY_SECRET: z.string().min(8).optional(),
+    RAZORPAY_WEBHOOK_SECRET: z.string().min(8).optional(),
+    RAZORPAY_PLAN_PRO_MONTHLY: z.string().startsWith("plan_").optional(),
+    RAZORPAY_PLAN_PRO_YEARLY: z.string().startsWith("plan_").optional(),
+    RAZORPAY_PLAN_BUSINESS_MONTHLY: z.string().startsWith("plan_").optional(),
+    RAZORPAY_PLAN_BUSINESS_YEARLY: z.string().startsWith("plan_").optional(),
   })
   .refine((values) => values.MAIL_PROVIDER !== "brevo" || values.BREVO_API_KEY, {
     message: "MAIL_PROVIDER=brevo needs BREVO_API_KEY (see .env.example)",

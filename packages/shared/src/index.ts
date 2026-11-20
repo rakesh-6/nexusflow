@@ -5,6 +5,7 @@
 export * from "./analytics.ts";
 export * from "./attachments.ts";
 export * from "./auth.ts";
+export * from "./billing.ts";
 export * from "./comments.ts";
 export * from "./dates.ts";
 export * from "./notifications.ts";

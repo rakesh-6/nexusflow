@@ -176,6 +176,21 @@ Files on tasks (and comments) are stored in Cloudinary as private ("authenticate
 | GET    | `/search`                   | `?q&types=task,project,team,user,comment&workspaceId&limit(≤20)` → `{task:{items,total}, …}`; items `{id, title, subtitle, path}`; a key like `NEX-12` or `nex 12` comes first                                                                        |
 | GET    | `/workspaces/:ws/tasks`     | the task filters of a project's list, across every project you can open in the workspace                                                                                                                                                              |
 
+## Billing (Phase 9) — Razorpay test mode, owner only
+
+| Method | Path (under `/orgs/:org`)           | Notes                                                                                                                                            |
+| ------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GET    | `/billing`                          | `{configured, plan, usage, invoices, payments, profile}`                                                                                         |
+| POST   | `/billing/checkout`                 | `{planTier: PRO\|BUSINESS, interval: MONTHLY\|YEARLY}` → `{subscriptionId, keyId, amount, …}` for Razorpay Checkout; 409 `ALREADY_SUBSCRIBED`    |
+| POST   | `/billing/checkout/verify`          | Checkout's `razorpay_payment_id`, `razorpay_subscription_id`, `razorpay_signature`; 400 `INVALID_SIGNATURE`; never changes the plan (AC-BILL-03) |
+| PATCH  | `/billing/subscription`             | `{planTier, interval?}`: upgrade now, downgrade at period end; 409 `DOWNGRADE_BLOCKED` with `details` = `[{limit, current, max}]`                |
+| POST   | `/billing/subscription/cancel`      | cancels at the end of the paid period                                                                                                            |
+| POST   | `/billing/subscription/refresh`     | "Check payment status": asks Razorpay and applies its answer (localhost never receives webhooks)                                                 |
+| PUT    | `/billing/profile`                  | billing address; optional 15-character GSTIN                                                                                                     |
+| POST   | `/api/v1/billing/webhooks/razorpay` | from Razorpay only: raw JSON, `X-Razorpay-Signature` + `X-Razorpay-Event-Id`; no CSRF header; a repeated event id answers `duplicate: true`      |
+
+Without the `RAZORPAY_*` settings the page still loads (`configured: false`) and payment actions answer 503 `BILLING_NOT_CONFIGURED`.
+
 ## Live updates (Phase 6) — Socket.io at `/socket.io`, `apps/api/src/realtime/gateway.ts`
 
 The browser connects with its normal `nf_session` cookie (same address as the API; Vite forwards `/socket.io` in development). No valid session or an unverified email → `connect_error` "UNAUTHENTICATED"; more than 10 connections per person → "TOO_MANY_CONNECTIONS". After connecting the server sends `session:ready {userId}` and puts the socket in the `user:<id>` room.
@@ -193,6 +208,7 @@ The browser connects with its normal `nf_session` cookie (same address as the AP
 | `task:viewers`                                                                                                                                         | task                  | `{taskId, userIds}`                                                                                         |
 | `typing`                                                                                                                                               | task (not the sender) | `{taskId, userId, name, typing}`                                                                            |
 | `presence:update`                                                                                                                                      | workspace             | `{workspaceId, online: userIds}`; offline 60 s after the last ping or when the last tab closes              |
+| `billing:updated`                                                                                                                                      | org                   | the plan or a payment changed (Phase 9); the web app reloads billing and plan limits                        |
 | `access:revoked`                                                                                                                                       | the socket            | `{type, id}`: after a membership, role, team or visibility change the socket left that room                 |
 | `session:ended`                                                                                                                                        | the socket            | the login session was ended; the socket is disconnected                                                     |
 

@@ -98,8 +98,20 @@ export function UsageSettings({ context }: { context: WorkspaceContext }) {
         Need more?{" "}
         <Link to="/pricing" className="font-medium text-primary hover:underline">
           Compare plans
-        </Link>{" "}
-        (upgrades arrive in Phase 9, in Razorpay test mode).
+        </Link>
+        {context.can("billing:manage") && (
+          <>
+            {" "}
+            or{" "}
+            <Link
+              to={`/${context.organization.slug}/settings/org/billing`}
+              className="font-medium text-primary hover:underline"
+            >
+              upgrade
+            </Link>
+          </>
+        )}
+        .
       </p>
     </SettingsPage>
   );

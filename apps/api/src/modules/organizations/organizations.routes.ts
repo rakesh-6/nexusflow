@@ -31,6 +31,7 @@ import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
 import { analyticsRouter } from "../analytics/analytics.routes.ts";
 import { attachmentsRouter } from "../attachments/attachments.routes.ts";
+import { billingRouter } from "../billing/billing.routes.ts";
 import { commentsRouter } from "../comments/comments.routes.ts";
 import { projectsRouter } from "../projects/projects.routes.ts";
 import { tasksRouter } from "../tasks/tasks.routes.ts";
@@ -96,6 +97,7 @@ org.use(tasksRouter);
 org.use(commentsRouter); // comments and reactions (Phase 6)
 org.use(attachmentsRouter); // file attachments (Phase 7)
 org.use(analyticsRouter); // dashboard numbers and search (Phase 8)
+org.use(billingRouter); // plans and payments, owner only (Phase 9)
 
 // --- The organization itself ------------------------------------------------
 

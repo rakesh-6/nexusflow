@@ -2,6 +2,7 @@ import { LockKeyhole } from "lucide-react";
 import type { ComponentType } from "react";
 import { useParams } from "react-router";
 import { EmptyState } from "../../components/common/EmptyState";
+import { BillingSettings } from "../../features/billing/BillingSettings";
 import { AuditLogSettings } from "../../features/organizations/settings/AuditLogSettings";
 import { InvitationsSettings } from "../../features/organizations/settings/InvitationsSettings";
 import { MembersSettings } from "../../features/organizations/settings/MembersSettings";
@@ -23,6 +24,7 @@ const ORG_SECTION_PAGES: Record<string, ComponentType<{ context: WorkspaceContex
   teams: AllTeamsSettings,
   projects: TrashSettings,
   permissions: PermissionsSettings,
+  billing: BillingSettings,
   usage: UsageSettings,
   audit: AuditLogSettings,
 };

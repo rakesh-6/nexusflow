@@ -10,6 +10,7 @@ import {
   Search,
   Settings,
   SquareCheckBig,
+  Sparkles,
   SquarePen,
   User,
   Users,
@@ -17,7 +18,9 @@ import {
 } from "lucide-react";
 import { Dialog as Primitive } from "radix-ui";
 import { useDeferredValue, useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
+import { useAiAvailable } from "../features/ai/hooks";
+import { MEETING_NOTES_PARAM } from "../features/ai/MeetingNotesDialog";
 import { useSearch } from "../features/insights/hooks";
 import { useProjects } from "../features/projects/hooks";
 import type { WorkspaceContext } from "../hooks/useWorkspace";
@@ -80,7 +83,9 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { projectKey } = useParams();
+  const aiAvailable = useAiAvailable(context.organization.slug);
   const [text, setText] = useState("");
   const [active, setActive] = useState(0);
   const q = useDeferredValue(text.trim());
@@ -139,6 +144,18 @@ export function CommandPalette({
             },
           ]
         : []),
+      ...(aiAvailable
+        ? [
+            {
+              id: "ai-notes",
+              label: "Summarize meeting notes",
+              hint: "AI",
+              icon: Sparkles,
+              path: `${location.pathname}?${MEETING_NOTES_PARAM}=1`,
+              group: "Actions",
+            },
+          ]
+        : []),
       {
         id: "new-project",
         label: "New project",
@@ -187,7 +204,7 @@ export function CommandPalette({
       });
     }
     return all;
-  }, [context, projectKey, projects, q, search.data]);
+  }, [aiAvailable, context, location.pathname, projectKey, projects, q, search.data]);
 
   const choose = (command: Command | undefined) => {
     if (!command) return;

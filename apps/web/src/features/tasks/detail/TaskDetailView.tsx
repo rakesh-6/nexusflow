@@ -31,6 +31,7 @@ import { useOpenTask } from "../TaskPanel";
 import { AttachmentsSection } from "./AttachmentsSection";
 import { CommentsSection } from "./CommentsSection";
 import { TaskActivity } from "./TaskActivity";
+import { AiTaskTools } from "../../ai/AiTaskTools";
 import { DependencyList, SubtaskList } from "./TaskRelations";
 
 // Everything about one task (PRD §11.6): shown in the side panel and on the
@@ -412,6 +413,8 @@ function Detail({
             </span>
           </Property>
         </dl>
+
+        <AiTaskTools orgSlug={orgSlug} task={task} onSave={(change) => save(change)} />
 
         <Section title="Description">
           <Suspense fallback={<Skeleton className="h-24" />}>

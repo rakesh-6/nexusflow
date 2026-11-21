@@ -43,7 +43,8 @@ NexusFlow: multi-tenant SaaS project management and team collaboration (Linear/C
 - Phase 4 ✅ (teams and projects: access rules, teams, projects, columns, milestones, labels, trash; API + web), commit `76afd75`, CI green.
 - Phases 5–8 ✅ committed (`b24afeb`, `261f016`), CI green. The MVP is complete.
 - Phase 9 ✅ (billing, Razorpay test mode), commit `8ed87c8`, CI green.
-- **Phase 10 (automations) is DONE but UNCOMMITTED**: shared rules `packages/shared/src/automations.ts`; engine `apps/api/src/modules/automations/automations.engine.ts` (+ `automations.actions.ts`), started in `server.ts` with `startAutomationBridge()`; jobs `automation.evaluate` and hourly `automations.due-soon`; routes `automations.routes.ts`; web `apps/web/src/features/automations/` (Settings › Automations). In tests, jobs are only recorded: `tests/automations.test.ts` runs them with `evaluateAutomations`. Waiting for "commit". Next: Phase 11 (AI).
+- Phase 10 ✅ (automations), commit `7b5a525`, CI green.
+- **Phase 11 (AI) is DONE but UNCOMMITTED** (`tests/ai.test.ts` 6 pass): provider `apps/api/src/lib/ai/provider.ts` (Gemini REST; `testAi` fake in tests), `apps/api/src/modules/ai/` (guard, prompts, service, routes mounted by `mountAi` only with a provider), web `apps/web/src/features/ai/` (task panel tools, Overview/Insights tools, ⌘K meeting notes dialog, Settings › AI). On 2026-11-21 the Neon test database was unreachable for ~15 minutes (its address briefly resolved to an extra, wrong IP); it recovered without changes.
 
 ## 5. Completed functionality (verified in code and tests)
 

@@ -83,8 +83,8 @@ export const ORG_SETTINGS_SECTIONS: Record<string, OrgSettingsSection> = {
   ai: {
     title: "AI features",
     description: "AI settings and usage.",
-    permission: "members:manage",
+    permission: "usage:read",
     phase: "Phase 11",
-    comingSoon: "Turn AI on or off for the organization and see monthly usage.",
+    comingSoon: "",
   },
 };

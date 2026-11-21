@@ -2558,6 +2558,20 @@ Verification: 5 API tests (AC-AUTO-01…04, the self-triggering rule, a chain of
 - **Dependencies**: Phase 5 (tasks), Phase 8 (analytics for insights/reports), Phase 9 (plan gating), Phase 7 (jobs/email).
 - **Acceptance criteria**: AC-AI-01…05 pass with a fake provider in tests and one real provider in staging; the app passes the full E2E suite with `AI_PROVIDER` unset; usage rows recorded for every call including failures.
 
+#### Phase 11 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 11.1 | Provider (`apps/api/src/lib/ai/provider.ts`): Gemini over its REST API (`AI_PROVIDER=gemini`, `AI_API_KEY`, `AI_MODEL` default `gemini-flash-latest`), 30 s timeout, JSON answers; a fake provider for tests. Shared request and answer schemas (`packages/shared/src/ai.ts`); plan limit `aiRequestsPerMonth` (FREE 0, PRO 500, BUSINESS 2,500) | none (no SDK) | ✅ Done |
+| 11.2 | Guard and usage (`apps/api/src/modules/ai/ai.guard.ts`): plan, the owner's switch (`Organization.settings.aiEnabled`), monthly quota (402 `PLAN_LIMIT_REACHED`), 20 requests per person per hour (429), circuit breaker (5 failures → wait 60 s), answer checked against its schema (502 `AI_INVALID_OUTPUT`), one `AiUsage` row for every call including failures | none | ✅ Done |
+| 11.3 | Seven features with prompts that keep user text inside `<data>` (`prompts.ts`): task description (returned as an editor document), subtasks, due date, project plan, project summary, meeting notes, insights; routes registered only with a provider (AC-AI-01); `GET /ai/status`, `GET /ai/usage`, `PUT /ai/settings` | none | ✅ Done |
+| 11.4 | Web: task panel (draft description, editable subtask suggestions, due date), project Overview (summary, plan → creates milestones and tasks), Insights ("Explain these numbers"), ⌘K "Summarize meeting notes" (action items → tasks), Settings › AI (owner switch, quota, usage); one-time privacy notice; every answer labelled "AI-generated" | none | ✅ Done |
+| 11.5 | Still open: the weekly report (needs an `AiReport` table, a Monday job and email), OpenAI/Anthropic adapters (paid APIs, so not built: this project uses free services only) | none | ⬜ Later |
+
+Changes from the plan above: only the Gemini adapter is built (free tier); accepted subtasks, plan tasks and action items are created through the normal task and milestone APIs, so the usual permission and plan checks apply.
+
+Verification: 6 API tests in `apps/api/tests/ai.test.ts` pass (AC-AI-01…05 with the fake provider, owner-only switch, editor-document check); 4 page renders (settings, not set up, privacy notice, task tools) pass.
+
 ### Phase 12 — Testing, optimization and deployment (≈ 1.5 weeks)
 - **Deliverables**: full E2E matrix (Chromium, WebKit, mobile), k6 load tests (task list, search, analytics at 100k tasks) with index tuning, Lighthouse CI thresholds (Performance ≥ 90), ZAP baseline scan fixes, CSP finalization, optional Postgres RLS policies, `ActivityLog` partitioning decision, Redis adapter readiness (feature-flagged), free-tier production deployment (§26.1) with the wake-up screen and job catch-up, encrypted weekly backup workflow with one restore test, demo mode and demo seed (§26.8), portfolio README (live demo link, architecture diagram, screenshots or GIFs, feature list, key technical decisions, how to run locally), runbooks, OpenAPI docs, release checklist.
 - **Dependencies**: all previous phases (can start E2E consolidation right after Phase 8 in parallel with 9–11).

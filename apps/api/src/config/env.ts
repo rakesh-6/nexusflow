@@ -51,6 +51,10 @@ const envSchema = z
     // "Continue with Google" (PRD §19.4). Leave empty to hide the button.
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // AI (PRD §11.16): Gemini's free tier. Leave AI_API_KEY empty and AI stays hidden.
+    AI_PROVIDER: z.enum(["gemini"]).default("gemini"),
+    AI_API_KEY: z.string().min(10).optional(),
+    AI_MODEL: z.string().min(3).default("gemini-flash-latest"),
     // Razorpay in TEST MODE (PRD §11.14). Leave empty and upgrading stays off.
     RAZORPAY_KEY_ID: z
       .string()

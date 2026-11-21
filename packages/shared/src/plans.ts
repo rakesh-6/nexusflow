@@ -18,6 +18,8 @@ export interface PlanLimits {
   maxAutomationsPerWorkspace: number | null;
   /** Automation runs per organization per calendar month. */
   maxAutomationRunsPerMonth: number | null;
+  /** AI requests per organization per calendar month (0: the plan has no AI). */
+  aiRequestsPerMonth: number | null;
 }
 
 const MB = 1024 * 1024;
@@ -34,6 +36,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     analyticsHistoryDays: 30,
     maxAutomationsPerWorkspace: 0,
     maxAutomationRunsPerMonth: 0,
+    aiRequestsPerMonth: 0,
   },
   PRO: {
     maxWorkspaces: 5,
@@ -45,6 +48,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     analyticsHistoryDays: 365,
     maxAutomationsPerWorkspace: 20,
     maxAutomationRunsPerMonth: 5_000,
+    aiRequestsPerMonth: 500,
   },
   BUSINESS: {
     maxWorkspaces: 20,
@@ -56,6 +60,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     analyticsHistoryDays: null,
     maxAutomationsPerWorkspace: null,
     maxAutomationRunsPerMonth: 50_000,
+    aiRequestsPerMonth: 2_500,
   },
   ENTERPRISE: {
     maxWorkspaces: null,
@@ -67,6 +72,7 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     analyticsHistoryDays: null,
     maxAutomationsPerWorkspace: null,
     maxAutomationRunsPerMonth: null,
+    aiRequestsPerMonth: null,
   },
 };
 

@@ -204,6 +204,23 @@ Without the `RAZORPAY_*` settings the page still loads (`configured: false`) and
 | POST   | `/automations/:id/dry-run`    | manager                    | `{taskId}` → `{matches, conditions:[{text, passes}], actions:[…]}`; changes nothing                                                             |
 | GET    | `/automations/:id/executions` | manager                    | `?status&cursor&limit`; SUCCESS / FAILED / SKIPPED with the result lines                                                                        |
 
+## AI (Phase 11) — only when the server has `AI_API_KEY` (otherwise every route is 404)
+
+| Method | Path (under `/orgs/:org/ai`) | Notes                                                                                                |
+| ------ | ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| GET    | `/status`                    | `{enabled, planAllows, usedThisMonth, monthlyLimit, provider, canManage}`                            |
+| GET    | `/usage`                     | owners and admins: this month per feature                                                            |
+| PUT    | `/settings`                  | owner: `{aiEnabled}`                                                                                 |
+| POST   | `/task-description`          | `{projectId, title, taskId?}` → `{goal, details, acceptanceCriteria, description (editor document)}` |
+| POST   | `/task-breakdown`            | `{taskId}` → `{subtasks: [{title, estimatedHours?, priority?}]}` (3–10)                              |
+| POST   | `/deadline-suggestion`       | `{taskId}` → `{suggestedDueDate, rationale}`                                                         |
+| POST   | `/project-plan`              | project managers: `{projectId}` → `{milestones, tasks}`                                              |
+| POST   | `/project-summary`           | `{projectId}` → `{summary, highlights, risks}`                                                       |
+| POST   | `/meeting-notes`             | `{text ≤ 20 kB, projectId?}` → `{summary, decisions, actionItems}`                                   |
+| POST   | `/insights`                  | `{workspaceId}` → `{insights: [{title, detail}]}`                                                    |
+
+Every answer is a suggestion; nothing is saved. Errors: 402 `PLAN_FEATURE_REQUIRED` / `PLAN_LIMIT_REACHED`, 403 `AI_DISABLED`, 429 `RATE_LIMITED` (20 an hour), 502 `AI_PROVIDER_ERROR` / `AI_INVALID_OUTPUT`, 503 `AI_BUSY` / `AI_UNAVAILABLE`.
+
 ## Live updates (Phase 6) — Socket.io at `/socket.io`, `apps/api/src/realtime/gateway.ts`
 
 The browser connects with its normal `nf_session` cookie (same address as the API; Vite forwards `/socket.io` in development). No valid session or an unverified email → `connect_error` "UNAUTHENTICATED"; more than 10 connections per person → "TOO_MANY_CONNECTIONS". After connecting the server sends `session:ready {userId}` and puts the socket in the `user:<id>` room.

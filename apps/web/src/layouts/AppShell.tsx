@@ -13,6 +13,7 @@ import { useWorkspace } from "../hooks/useWorkspace";
 import { ApiError } from "../lib/api";
 import { cn } from "../lib/utils";
 import { NotFoundPage } from "../pages/NotFoundPage";
+import { MeetingNotesDialog } from "../features/ai/MeetingNotesDialog";
 import { CommandPalette } from "./CommandPalette";
 import { SidebarContent } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -115,6 +116,7 @@ export function AppShell() {
         </div>
       </div>
       <CommandPalette context={context} open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <MeetingNotesDialog context={context} />
     </TooltipProvider>
   );
 }

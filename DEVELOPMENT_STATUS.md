@@ -10,7 +10,7 @@ Repository: https://github.com/rakesh-6/nexusflow (branch `main`).
 
 ## Current phase
 
-**Phases 1–9 are committed and CI is green (Phase 9: `8ed87c8`). Phase 10 — automations: DONE, NOT YET COMMITTED; its 5 API tests and 6 unit tests pass.** Next: commit when the user says so, then Phase 11 (AI with Gemini, free tier).
+**Phases 1–10 are committed and CI is green (Phase 10: `7b5a525`). Phase 11 — AI (Gemini free tier): DONE, NOT YET COMMITTED; `tests/ai.test.ts` 6 pass, type checks, lint, build and 4 page renders pass.** Next: the full suite and commit when the user says so, then Phase 12. (On 2026-11-21 the Neon test database was briefly unreachable from the developer's network; it came back by itself.)
 
 | Phase                                                | Status                                   | Commit    |
 | ---------------------------------------------------- | ---------------------------------------- | --------- |

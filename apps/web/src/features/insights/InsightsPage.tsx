@@ -3,6 +3,7 @@ import { PageHeader } from "../../components/common/PageHeader";
 import { useWorkspace } from "../../hooks/useWorkspace";
 import { useProjectOutlet } from "../../pages/ProjectLayout";
 import { selectClass } from "../tasks/taskBits";
+import { AiInsightsTools, AiProjectTools } from "../ai/AiProjectTools";
 import { InsightsView } from "./InsightsView";
 
 // /:org/:ws/insights and a project's Overview tab (PRD §11.12).
@@ -37,6 +38,7 @@ export default function InsightsPage() {
         description={`How work is going across the projects you can open in ${context.workspace.name}.`}
         actions={<RangePicker value={range} onChange={setRange} />}
       />
+      <AiInsightsTools context={context} />
       <InsightsView context={context} range={range} />
     </div>
   );
@@ -47,8 +49,11 @@ export function ProjectOverviewPage() {
   const [range, setRange] = useState(30);
   return (
     <div className="space-y-4 px-4 py-4 sm:px-6">
-      <div className="flex justify-end">
-        <RangePicker value={range} onChange={setRange} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <AiProjectTools orgSlug={context.organization.slug} project={project} />
+        <div className="ml-auto">
+          <RangePicker value={range} onChange={setRange} />
+        </div>
       </div>
       <InsightsView context={context} range={range} projectId={project.id} />
     </div>

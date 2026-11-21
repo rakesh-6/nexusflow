@@ -29,6 +29,8 @@ import {
 } from "../../middleware/tenant.ts";
 import { sendSuccess } from "../../utils/response.ts";
 import { validateRequest } from "../../utils/validateRequest.ts";
+import { aiProvider } from "../../lib/ai/provider.ts";
+import { mountAi } from "../ai/ai.routes.ts";
 import { analyticsRouter } from "../analytics/analytics.routes.ts";
 import { attachmentsRouter } from "../attachments/attachments.routes.ts";
 import { automationsRouter } from "../automations/automations.routes.ts";
@@ -100,6 +102,8 @@ org.use(attachmentsRouter); // file attachments (Phase 7)
 org.use(analyticsRouter); // dashboard numbers and search (Phase 8)
 org.use(billingRouter); // plans and payments, owner only (Phase 9)
 org.use(automationsRouter); // automation rules (Phase 10)
+// AI routes exist only when a provider is set up (Phase 11, AC-AI-01).
+mountAi(org, aiProvider);
 
 // --- The organization itself ------------------------------------------------
 

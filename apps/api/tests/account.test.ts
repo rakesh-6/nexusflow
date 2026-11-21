@@ -87,6 +87,7 @@ describe("optional features", () => {
     expect(response.body.data).toEqual({
       google: expect.any(Boolean),
       photoUpload: expect.any(Boolean),
+      demo: expect.any(Boolean),
     });
   });
 

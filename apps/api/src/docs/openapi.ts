@@ -68,6 +68,7 @@ const CurrentUser = z.object({
   hasPassword: z.boolean(),
   lastActiveWorkspaceId: z.uuid().nullable(),
   createdAt: z.iso.datetime(),
+  isDemo: z.boolean(),
 });
 
 const SessionInfo = z.object({
@@ -432,7 +433,25 @@ const ENDPOINTS: Endpoint[] = [
     tag: "Auth",
     summary: "Which optional features are set up on this server",
     responses: {
-      "200": ["Feature switches", ok(z.object({ google: z.boolean(), photoUpload: z.boolean() }))],
+      "200": [
+        "Feature switches",
+        ok(z.object({ google: z.boolean(), photoUpload: z.boolean(), demo: z.boolean() })),
+      ],
+    },
+  },
+  {
+    method: "post",
+    path: "/auth/demo",
+    tag: "Auth",
+    summary: "“Try the demo”: signs in a fresh visitor as an admin of the sample organization",
+    optionalBody: true,
+    responses: {
+      "201": [
+        "Signed in; sets the nf_session cookie",
+        ok(z.object({ user: CurrentUser, orgSlug: z.string() })),
+      ],
+      "404": ["The demo is not switched on (NOT_FOUND)"],
+      "503": ["Being prepared (DEMO_NOT_READY) or full (DEMO_FULL)"],
     },
   },
   {

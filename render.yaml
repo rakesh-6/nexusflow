@@ -1,0 +1,70 @@
+# Render Blueprint (PRD §26.1): one FREE web service that serves the web app,
+# the API and live updates from one address. In Render: New > Blueprint > pick
+# this repository. Values marked "sync: false" are secrets you type into
+# Render's dashboard; they are never stored in the repository.
+services:
+  - type: web
+    name: nexusflow
+    runtime: node
+    plan: free
+    region: ohio # the same region as the Neon database (us-east-2)
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm build
+    # Migrations run at start: Render's separate pre-deploy step is a paid feature (PRD §26.4).
+    startCommand: pnpm --filter @nexusflow/api db:deploy && pnpm --filter @nexusflow/api start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JOBS_ENABLED
+        value: "true"
+      - key: DEMO_MODE
+        value: "true"
+      - key: MAIL_PROVIDER
+        value: brevo
+      - key: CLOUDINARY_FOLDER_PREFIX
+        value: nexusflow/production
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_MODEL
+        value: gemini-flash-latest
+      # Secrets and addresses: fill these in on Render.
+      - key: APP_URL
+        sync: false
+      - key: WEB_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_DATABASE_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_PLAN_PRO_MONTHLY
+        sync: false
+      - key: RAZORPAY_PLAN_PRO_YEARLY
+        sync: false
+      - key: RAZORPAY_PLAN_BUSINESS_MONTHLY
+        sync: false
+      - key: RAZORPAY_PLAN_BUSINESS_YEARLY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

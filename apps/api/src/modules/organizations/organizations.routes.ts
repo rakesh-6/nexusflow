@@ -1,3 +1,4 @@
+import { assertNotDemo } from "../../demo/demo.service.ts";
 import {
   changeRoleSchema,
   createOrganizationSchema,
@@ -76,6 +77,7 @@ import {
 export const organizationsRouter = Router();
 
 organizationsRouter.post("/", requireVerified, async (req, res) => {
+  assertNotDemo(currentAuth(req).user, "Creating organizations");
   const { body } = validateRequest(req, { body: createOrganizationSchema });
   const { organization, workspace } = await createOrganization(currentAuth(req).user, body, req);
   sendSuccess(
@@ -112,15 +114,27 @@ org.get("/context", async (req, res) => {
   sendSuccess(res, await getOrganizationContext(tenant, user));
 });
 
-org.patch("/", requireOrgPermission("org:update"), async (req, res) => {
-  const { body } = validateRequest(req, { body: updateOrganizationSchema });
-  const { user, tenant } = auth(req);
-  const updated = await updateOrganization(tenant, user, body, req);
-  sendSuccess(res, { name: updated.name, slug: updated.slug });
-});
+// The demo organization is shared by every visitor (PRD §26.8).
+const notInDemo = (what: string) => (req: Request, _res: unknown, next: () => void) => {
+  assertNotDemo(currentAuth(req).user, what);
+  next();
+};
+
+org.patch(
+  "/",
+  requireOrgPermission("org:update"),
+  notInDemo("Renaming the organization"),
+  async (req, res) => {
+    const { body } = validateRequest(req, { body: updateOrganizationSchema });
+    const { user, tenant } = auth(req);
+    const updated = await updateOrganization(tenant, user, body, req);
+    sendSuccess(res, { name: updated.name, slug: updated.slug });
+  },
+);
 
 org.delete(
   "/",
+  notInDemo("Deleting the organization"),
   recheckAccessAfter,
   requireOrgPermission("org:delete"),
   requireRecentAuth,
@@ -134,6 +148,7 @@ org.delete(
 
 org.post(
   "/transfer-ownership",
+  notInDemo("Transferring ownership"),
   requireOrgPermission("org:transfer"),
   requireRecentAuth,
   async (req, res) => {
@@ -221,19 +236,29 @@ org.get("/members", requireOrgPermission("members:read"), async (req, res) => {
 
 const userIdParams = z.object({ userId: z.uuid() });
 
-org.patch("/members/:userId", requireOrgPermission("members:manage"), async (req, res) => {
-  const { params, body } = validateRequest(req, { params: userIdParams, body: changeRoleSchema });
-  const { user, tenant } = auth(req);
-  await changeMemberRole(tenant, user, params.userId, body.role, req);
-  sendSuccess(res, { updated: true });
-});
+org.patch(
+  "/members/:userId",
+  requireOrgPermission("members:manage"),
+  notInDemo("Changing roles"),
+  async (req, res) => {
+    const { params, body } = validateRequest(req, { params: userIdParams, body: changeRoleSchema });
+    const { user, tenant } = auth(req);
+    await changeMemberRole(tenant, user, params.userId, body.role, req);
+    sendSuccess(res, { updated: true });
+  },
+);
 
-org.delete("/members/:userId", requireOrgPermission("members:manage"), async (req, res) => {
-  const { params } = validateRequest(req, { params: userIdParams });
-  const { user, tenant } = auth(req);
-  await removeMember(tenant, user, params.userId, req);
-  sendSuccess(res, { removed: true });
-});
+org.delete(
+  "/members/:userId",
+  requireOrgPermission("members:manage"),
+  notInDemo("Removing members"),
+  async (req, res) => {
+    const { params } = validateRequest(req, { params: userIdParams });
+    const { user, tenant } = auth(req);
+    await removeMember(tenant, user, params.userId, req);
+    sendSuccess(res, { removed: true });
+  },
+);
 
 // --- Invitations ------------------------------------------------------------
 

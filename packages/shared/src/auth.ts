@@ -167,6 +167,12 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 /** The signed-in person as the API returns it from GET /users/me. */
+/** "Try the demo" visitors get an address here (PRD §26.8); it can never receive email. */
+export const DEMO_EMAIL_DOMAIN = "demo.nexusflow.invalid";
+export const isDemoEmail = (email: string) => email.toLowerCase().endsWith(`@${DEMO_EMAIL_DOMAIN}`);
+/** Demo visitors may upload files up to 2 MB. */
+export const DEMO_MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+
 export interface CurrentUser {
   id: string;
   name: string;
@@ -178,4 +184,6 @@ export interface CurrentUser {
   /** The workspace opened last, so "/" can return there. */
   lastActiveWorkspaceId: string | null;
   createdAt: string;
+  /** A "Try the demo" visitor: some account and organization changes are switched off. */
+  isDemo: boolean;
 }

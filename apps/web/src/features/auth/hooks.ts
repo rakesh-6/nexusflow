@@ -40,6 +40,15 @@ export function useLogin() {
   });
 }
 
+/** "Try the demo": a fresh visitor account in the sample organization (PRD §26.8). */
+export function useStartDemo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiPost<{ user: CurrentUser; orgSlug: string }>("/api/v1/auth/demo"),
+    onSuccess: ({ user }) => queryClient.setQueryData(CURRENT_USER_KEY, user),
+  });
+}
+
 export function useRegister() {
   const queryClient = useQueryClient();
   return useMutation({

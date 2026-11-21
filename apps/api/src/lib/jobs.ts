@@ -23,6 +23,7 @@ export const JOB_NAMES = [
   "billing.reconcile",
   "automation.evaluate",
   "automations.due-soon",
+  "demo.reset",
 ] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 export type JobHandler = (data: Record<string, unknown>) => Promise<void>;
@@ -38,6 +39,7 @@ const SCHEDULES: Partial<Record<JobName, string>> = {
   "trash.purge": "40 3 * * *",
   "billing.reconcile": "50 3 * * *",
   "automations.due-soon": "35 * * * *",
+  "demo.reset": "45 * * * *",
 };
 
 /** Jobs sent while testing, newest last. */
@@ -92,7 +94,13 @@ export async function startJobs() {
       );
     }
     const cron = SCHEDULES[name];
-    if (cron) await queue.schedule(name, cron, {}, { tz: "UTC" });
+    if (cron) {
+      await queue.schedule(name, cron, {}, { tz: "UTC" });
+      // Catch up after the free service slept through its timetable (PRD §26.1):
+      // run each timetable job once now. Reruns are harmless, and the key stops
+      // quick restarts from queueing it again within 15 minutes.
+      await queue.send(name, {}, { singletonKey: "catch-up", singletonSeconds: 15 * 60 });
+    }
   }
   boss = queue;
   logger.info("Background jobs started");

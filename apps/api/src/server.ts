@@ -3,6 +3,7 @@ import { env } from "./config/env.ts";
 import { JOB_HANDLERS } from "./jobs/index.ts";
 import { registerJobHandlers, startJobs, stopJobs } from "./lib/jobs.ts";
 import { logger } from "./lib/logger.ts";
+import { resetDemoIfDue } from "./demo/demo.service.ts";
 import { prisma } from "./lib/prisma.ts";
 import { startAutomationBridge } from "./modules/automations/automations.engine.ts";
 import { attachRealtime } from "./realtime/gateway.ts";
@@ -19,6 +20,9 @@ registerJobHandlers(JOB_HANDLERS);
 startJobs().catch((error: unknown) =>
   logger.error({ err: error }, "Background jobs could not start; the app keeps running"),
 );
+// The demo organization exists from the first visit, even after a long sleep (PRD §26.8).
+resetDemoIfDue().catch((error: unknown) => logger.error({ err: error }, "Demo reset failed"));
+
 // Task and comment changes become automation jobs (PRD §11.15.2).
 const stopAutomations = startAutomationBridge();
 

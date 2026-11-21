@@ -18,7 +18,8 @@
     "db:generate": "pnpm --filter @nexusflow/api db:generate",
     "db:migrate": "pnpm --filter @nexusflow/api db:migrate",
     "db:studio": "pnpm --filter @nexusflow/api db:studio",
-    "db:seed": "pnpm --filter @nexusflow/api db:seed"
+    "db:seed": "pnpm --filter @nexusflow/api db:seed",
+    "test:e2e": "pnpm --filter @nexusflow/e2e test:e2e"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

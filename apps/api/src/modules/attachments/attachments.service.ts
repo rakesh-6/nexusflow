@@ -1,3 +1,5 @@
+import { DEMO_MAX_UPLOAD_BYTES } from "@nexusflow/shared";
+import { isDemoUser } from "../../demo/demo.service.ts";
 import { randomUUID } from "node:crypto";
 import {
   ATTACHMENT_URL_MINUTES,
@@ -91,6 +93,9 @@ export async function signAttachment(
   if (!type) throw new AppError(400, "VALIDATION_ERROR", "This kind of file cannot be attached");
 
   assertWithinPlan(tenant.subscription, "maxFileBytes", 0, input.sizeBytes);
+  if (isDemoUser(user) && input.sizeBytes > DEMO_MAX_UPLOAD_BYTES) {
+    throw new AppError(400, "DEMO_RESTRICTED", "In the demo, files can be up to 2 MB.");
+  }
   assertWithinPlan(
     tenant.subscription,
     "maxStorageBytes",

@@ -1,0 +1,44 @@
+# Weekly database backup (PRD §26.6). It dumps the production database,
+# ENCRYPTS the dump (artifacts of a public repository can be downloaded by
+# anyone), and keeps it for 7 days. Needs two repository secrets:
+#   BACKUP_DATABASE_URL   Neon's DIRECT connection string for the main branch
+#   BACKUP_PASSPHRASE     a long random password; keep a copy somewhere safe
+# Restore steps: docs/runbooks/restore-from-backup.md
+name: Weekly backup
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Sundays 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check the secrets are set
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "Backup secrets are not set; skipping."
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Dump and encrypt
+        if: env.SKIP != '1'
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          # pg_dump from the same major version as Neon (PostgreSQL 17), via Docker.
+          docker run --rm postgres:17 pg_dump --format=custom --no-owner "$DATABASE_URL" > backup.dump
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in backup.dump -out backup.dump.enc -pass env:PASSPHRASE
+          rm backup.dump
+          ls -lh backup.dump.enc
+      - uses: actions/upload-artifact@v4
+        if: env.SKIP != '1'
+        with:
+          name: nexusflow-backup-${{ github.run_id }}
+          path: backup.dump.enc
+          retention-days: 7

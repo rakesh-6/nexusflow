@@ -4,10 +4,11 @@ import { apiGet } from "../../lib/api";
 import { safeReturnTo } from "./hooks";
 
 /** Which sign-in methods the server has switched on (Google needs setup, PRD §22). */
-function useAuthProviders() {
+export function useAuthProviders() {
   return useQuery({
     queryKey: ["auth-providers"],
-    queryFn: () => apiGet<{ google: boolean }>("/api/v1/auth/providers"),
+    queryFn: () =>
+      apiGet<{ google: boolean; photoUpload?: boolean; demo?: boolean }>("/api/v1/auth/providers"),
     staleTime: Infinity,
   });
 }

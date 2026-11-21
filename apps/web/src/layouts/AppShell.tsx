@@ -35,6 +35,7 @@ export function AppShell() {
   const { orgSlug, workspaceSlug } = useParams();
   const orgContext = useOrgContext(orgSlug);
   const context = useWorkspace();
+  const { data: user } = useCurrentUser();
   useRememberOpenedWorkspace(workspaceSlug ? context?.workspace.id : undefined);
   // Live updates for the open organization and workspace (PRD §11.8).
   useRealtimeSync(context);
@@ -103,6 +104,12 @@ export function AppShell() {
         </Sheet>
 
         <div className="flex min-w-0 flex-1 flex-col">
+          {user?.isDemo && (
+            <p role="status" className="border-b bg-warning/15 px-4 py-1.5 text-center text-xs">
+              You are exploring the demo: other visitors see your changes, and everything resets
+              every day. Demo billing uses Razorpay test mode, so no real payments.
+            </p>
+          )}
           <TopBar
             context={context}
             onOpenMenu={() => setDrawerOpen(true)}

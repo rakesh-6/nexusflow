@@ -9,6 +9,7 @@ import { Button } from "../../../components/ui/button";
 import { AuthCard } from "../AuthCard";
 import { SIGNED_IN_HOME } from "../guards";
 import { safeReturnTo, useLogin } from "../hooks";
+import { DemoButton } from "../DemoButton";
 import { GoogleButton } from "../GoogleButton";
 
 export default function LoginPage() {
@@ -49,6 +50,7 @@ export default function LoginPage() {
         </>
       }
     >
+      <DemoButton />
       <GoogleButton />
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         {formError && <Alert variant="error">{formError}</Alert>}

@@ -51,6 +51,10 @@ const envSchema = z
     // "Continue with Google" (PRD §19.4). Leave empty to hide the button.
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // "Try the demo" (PRD §26.8): a login button that signs visitors into Acme Studio,
+    // which is rebuilt every DEMO_RESET_HOURS. Off unless set to true.
+    DEMO_MODE: z.stringbool().default(false),
+    DEMO_RESET_HOURS: z.coerce.number().int().min(1).max(168).default(24),
     // AI (PRD §11.16): Gemini's free tier. Leave AI_API_KEY empty and AI stays hidden.
     AI_PROVIDER: z.enum(["gemini"]).default("gemini"),
     AI_API_KEY: z.string().min(10).optional(),

@@ -1,3 +1,5 @@
+import { DEMO_MAX_UPLOAD_BYTES } from "@nexusflow/shared";
+import { isDemoUser } from "../../demo/demo.service.ts";
 import {
   avatarConfirmSchema,
   avatarUploadSchema,
@@ -93,8 +95,12 @@ usersRouter.delete("/me", requireRecentAuth, async (req, res) => {
 
 usersRouter.post("/me/avatar/sign", requireAuth, (req, res) => {
   // The type and size are checked here; Cloudinary's own answer is checked at confirm.
-  validateRequest(req, { body: avatarUploadSchema });
-  sendSuccess(res, startAvatarUpload(currentAuth(req).user));
+  const { body } = validateRequest(req, { body: avatarUploadSchema });
+  const { user } = currentAuth(req);
+  if (isDemoUser(user) && body.sizeBytes > DEMO_MAX_UPLOAD_BYTES) {
+    throw new AppError(400, "DEMO_RESTRICTED", "In the demo, photos can be up to 2 MB.");
+  }
+  sendSuccess(res, startAvatarUpload(user));
 });
 
 usersRouter.post("/me/avatar/confirm", requireAuth, async (req, res) => {

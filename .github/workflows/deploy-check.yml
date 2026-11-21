@@ -1,0 +1,39 @@
+# After CI passes on main, Render deploys by itself. This job waits for the
+# live site to answer /api/v1/health/ready (database reachable), as a smoke
+# check (PRD §26.4). Set the repository variable APP_URL (Settings > Secrets
+# and variables > Actions > Variables), e.g. https://nexusflow.onrender.com.
+# Without it the job just says so and passes.
+name: Deploy check
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ready:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for the live site
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          if [ -z "$APP_URL" ]; then
+            echo "APP_URL is not set; nothing to check yet."
+            exit 0
+          fi
+          # A sleeping free service takes up to a minute to wake; a deploy a few more.
+          for i in $(seq 1 40); do
+            if curl --silent --fail --max-time 30 "$APP_URL/api/v1/health/ready"; then
+              echo
+              echo "The live site is ready."
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "The live site did not become ready in time." >&2
+          exit 1

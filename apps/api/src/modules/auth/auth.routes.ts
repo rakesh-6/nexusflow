@@ -1,3 +1,5 @@
+import { assertNotDemo, startDemo } from "../../demo/demo.service.ts";
+import { env } from "../../config/env.ts";
 import {
   changePasswordSchema,
   emailOnlySchema,
@@ -110,6 +112,7 @@ authRouter.post("/reauthenticate", requireAuth, authLimiter, async (req, res) =>
 });
 
 authRouter.post("/change-password", requireAuth, authLimiter, async (req, res) => {
+  assertNotDemo(currentAuth(req).user, "Changing the password");
   const { body } = validateRequest(req, { body: changePasswordSchema });
   const { user, session } = currentAuth(req);
   await changePassword(user, session, body, req);
@@ -118,7 +121,16 @@ authRouter.post("/change-password", requireAuth, authLimiter, async (req, res) =
 
 // Which sign-in methods are switched on, so the web app shows only working buttons.
 authRouter.get("/providers", (_req, res) => {
-  sendSuccess(res, { google: googleConfigured, photoUpload: cloudinaryConfigured });
+  sendSuccess(res, {
+    google: googleConfigured,
+    photoUpload: cloudinaryConfigured,
+    demo: env.DEMO_MODE,
+  });
+});
+
+/** "Try the demo" (PRD §26.8): signs in a fresh visitor to the sample organization. */
+authRouter.post("/demo", authLimiter, async (req, res) => {
+  sendSuccess(res, await startDemo(req, res), 201);
 });
 
 authRouter.get("/google", authLimiter, async (req, res) => {

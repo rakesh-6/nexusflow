@@ -8,6 +8,7 @@ import {
   runDueSoonAutomations,
   type EvaluateJob,
 } from "../modules/automations/automations.engine.ts";
+import { resetDemoIfDue } from "../demo/demo.service.ts";
 import { reconcileSubscriptions } from "../modules/billing/billing.service.ts";
 import { settleNotifications } from "../modules/notifications/notifications.service.ts";
 import {
@@ -70,6 +71,8 @@ export const JOB_HANDLERS: Record<JobName, JobHandler> = {
     await evaluateAutomations(data as unknown as EvaluateJob);
     await settleNotifications();
   },
+  // The shared "Try the demo" organization is rebuilt every DEMO_RESET_HOURS (PRD §26.8).
+  "demo.reset": async () => void (await resetDemoIfDue()),
   "automations.due-soon": async () => {
     await runDueSoonAutomations();
     await settleNotifications();

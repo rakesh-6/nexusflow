@@ -1,3 +1,4 @@
+import { isDemoUser } from "../../demo/demo.service.ts";
 import type { InvitationInput } from "@nexusflow/shared";
 import type { Request } from "express";
 import { env } from "../../config/env.ts";
@@ -114,7 +115,10 @@ export async function createInvitations(
       : await prisma.invitation.create({
           data: { ...data, organizationId: organization.id, email: invite.email },
         });
-    await sendInvitationEmail(invitation, token, organization.name, inviter.name);
+    // Demo visitors' invitations are created but never emailed (PRD §26.8).
+    if (!isDemoUser(inviter)) {
+      await sendInvitationEmail(invitation, token, organization.name, inviter.name);
+    }
     await logActivity({
       organizationId: organization.id,
       actorId: inviter.id,
@@ -160,7 +164,9 @@ export async function resendInvitation(tenant: Tenant, actor: User, invitationId
     where: { id: invitation.id },
     data: { tokenHash: sha256(token), expiresAt: new Date(Date.now() + LIFETIME_MS) },
   });
-  await sendInvitationEmail(updated, token, tenant.organization.name, actor.name);
+  if (!isDemoUser(actor)) {
+    await sendInvitationEmail(updated, token, tenant.organization.name, actor.name);
+  }
 }
 
 export async function revokeInvitation(

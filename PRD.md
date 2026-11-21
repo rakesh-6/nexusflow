@@ -2579,6 +2579,19 @@ Verification: 6 API tests in `apps/api/tests/ai.test.ts` pass (AC-AI-01…05 wit
 
 ---
 
+
+#### Phase 12 build steps (progress tracker)
+
+| Step | What it builds | Libraries | Status |
+|---|---|---|---|
+| 12.1 | Demo mode (§26.8): `DEMO_MODE`, `DEMO_RESET_HOURS`; `POST /auth/demo` signs in a fresh visitor (`@demo.nexusflow.invalid`) as ADMIN of Acme Studio; limits for visitors (no renaming or deleting the organization, no ownership transfer, no role changes or removals, no new organizations, no password change, invitations not emailed, uploads ≤ 2 MB); "Try the demo" button and a demo banner; sample data moved to `apps/api/src/demo/sampleData.ts` and shared with `pnpm db:seed`; rebuild at start-up and hourly when due, with random passwords for the sample people in production | none | ✅ Done |
+| 12.2 | Free deployment: `render.yaml` Blueprint (free plan, Ohio, migrations at start), `Deploy check` workflow (waits for `/health/ready`), `Weekly backup` workflow (pg_dump, AES-256 encrypted, 7-day artifact), job catch-up after sleep, final `DEPLOYMENT.md` with a release checklist | none | ✅ Done |
+| 12.3 | Runbooks in `docs/runbooks/`: rotate a secret, restore from backup, stuck jobs, replay a webhook, reset the demo; README updated | none | ✅ Done |
+| 12.4 | Browser tests and budgets: Playwright E2E (Chromium, WebKit, mobile), axe accessibility checks, Lighthouse CI, k6 load tests | Playwright, @axe-core/playwright, @lhci/cli (k6 is a separate free program) | ⬜ Waiting for the developer's approval of the libraries |
+| 12.5 | Optional: Sentry free plan for error alerts, Postgres row-level security, `ActivityLog` partitioning decision | @sentry/node, @sentry/react | ⬜ Optional |
+
+Changes from the plan above: demo visitors also cannot change roles, remove members or create organizations, so one visitor cannot spoil the shared demo for the others; visitors are removed together with the demo organization at each rebuild (their tasks and comments block deleting them earlier). The "Waking up the server" screen is Render's own: while the free service sleeps, the server that would show our screen is asleep too.
+
 ## 28. Acceptance Criteria
 
 ### 28.1 MVP exit checklist (end of Phase 8)

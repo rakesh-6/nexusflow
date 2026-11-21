@@ -1,3 +1,4 @@
+import { isDemoEmail } from "@nexusflow/shared";
 import type {
   ChangePasswordInput,
   CurrentUser,
@@ -44,6 +45,7 @@ export function toCurrentUser(user: User): CurrentUser {
     hasPassword: user.passwordHash !== null,
     lastActiveWorkspaceId: user.lastActiveWorkspaceId,
     createdAt: user.createdAt.toISOString(),
+    isDemo: isDemoEmail(user.email),
   };
 }
 

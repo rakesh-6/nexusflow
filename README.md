@@ -1,6 +1,8 @@
 # NexusFlow
 
-A multi-tenant SaaS platform for project management and team collaboration — organizations, workspaces, teams, projects and tasks, with a Kanban board, list and calendar views, comments with mentions, live updates, notifications, file attachments and an analytics dashboard. It is a portfolio project that runs entirely on free tiers.
+A multi-tenant SaaS platform for project management and team collaboration — organizations, workspaces, teams, projects and tasks, with a Kanban board, list and calendar views, comments with mentions, live updates, notifications, file attachments, an analytics dashboard, billing in Razorpay test mode, automation rules and AI suggestions. It is a portfolio project that runs entirely on free tiers.
+
+**Try it without signing up:** the login page has a **Try the demo** button. You join the sample company "Acme Studio" as an admin; it resets every day.
 
 The full product specification is in [PRD.md](PRD.md); progress per phase is tracked in PRD §27 and [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md).
 
@@ -13,6 +15,9 @@ The full product specification is in [PRD.md](PRD.md); progress per phase is tra
 - **Notifications**: inbox with unread badge, per-type in-app and email settings, due-soon and overdue reminders from background jobs.
 - **Files**: attachments on tasks through Cloudinary signed uploads, checked by the server, with 15-minute links.
 - **Insights**: tiles, completion trend, status and priority breakdowns, project health, workload; global search and a ⌘K command palette; a public pricing page.
+- **Billing**: Free, Pro and Business plans with Razorpay test-mode checkout, signed webhooks, upgrade, downgrade with a limits check, cancel, invoices (no real money moves).
+- **Automations**: "when a task is done, notify the project managers" style rules with a three-step builder, ready-made recipes, dry runs, a run log and loop protection.
+- **AI (optional, Gemini free tier)**: draft task descriptions, suggest subtasks and due dates, summarize projects and meeting notes, explain the numbers. Every answer is a reviewed suggestion.
 
 ## Tech stack
 
@@ -22,10 +27,10 @@ The full product specification is in [PRD.md](PRD.md); progress per phase is tra
 | Web                   | React 19, Vite 8, Tailwind CSS 4, Radix UI, TanStack Query, React Router, React Hook Form + Zod, dnd-kit, Tiptap, TanStack Table + Virtual |
 | API                   | Node.js 24 (runs TypeScript directly), Express 5, Zod, Socket.io, pg-boss                                                                  |
 | Database              | PostgreSQL on Neon, Prisma 7                                                                                                               |
-| Services (free tiers) | Neon, Cloudinary (files), Brevo (email), Razorpay test mode (billing, Phase 9), Render (hosting)                                           |
+| Services (free tiers) | Neon, Cloudinary (files), Brevo (email), Razorpay test mode (billing), Gemini (AI), Render (hosting)                                       |
 | Tests                 | Vitest + Supertest (API, against a real Neon test branch), Vitest unit tests                                                               |
 
-Architecture notes: [ARCHITECTURE.md](ARCHITECTURE.md) · database: [DATABASE.md](DATABASE.md) · API: [API.md](API.md) (and `apps/api/openapi.json`) · deployment: [DEPLOYMENT.md](DEPLOYMENT.md).
+Architecture notes: [ARCHITECTURE.md](ARCHITECTURE.md) · database: [DATABASE.md](DATABASE.md) · API: [API.md](API.md) (and `apps/api/openapi.json`) · deployment: [DEPLOYMENT.md](DEPLOYMENT.md) · runbooks: [docs/runbooks](docs/runbooks/README.md).
 
 ## Project structure
 
@@ -64,4 +69,4 @@ pnpm build          # build the web app; the API then serves it on http://localh
 pnpm db:studio      # browse the database in your browser
 ```
 
-Optional, all free: Cloudinary keys for profile photos and attachments, a Brevo API key for real emails, Google OAuth keys for "Continue with Google". Without them those features explain that they are not set up. Set `JOBS_ENABLED=false` in `.env` to stop background jobs from keeping the free database awake.
+Optional, all free: Cloudinary keys for profile photos and attachments, a Brevo API key for real emails, Google OAuth keys for "Continue with Google", Razorpay **test** keys for billing, a Gemini key (`AI_API_KEY`) for AI, `DEMO_MODE=true` for the "Try the demo" button. Without them those features explain that they are not set up. Set `JOBS_ENABLED=false` in `.env` to stop background jobs from keeping the free database awake.
